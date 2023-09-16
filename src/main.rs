@@ -1,9 +1,7 @@
 use std::env;
 use std::process;
 
-fn min(x: i32, y: i32) -> i32 {
-    return if x < y { x } else { y };
-}
+mod min;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -23,5 +21,5 @@ fn main() {
         process::exit(1);
     });
 
-    println!("The minimum of {} and {} is {}", num1, num2, min(num1, num2));
+    println!("The minimum of {} and {} is {}", num1, num2, min::min(num1, num2));
 }
