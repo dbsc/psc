@@ -1,5 +1,13 @@
 {
     "name": "PSC",
     "dockerFile": "../Dockerfile",
-    "context": ".."
+    "context": "..",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "leanprover.lean4",
+                "rust-lang.rust-analyzer"
+            ]
+        }
+    }
 }
