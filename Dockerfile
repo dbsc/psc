@@ -22,3 +22,9 @@ RUN opam install -y ./charon/charon-ml
 RUN eval $(opam env) && cd aeneas && make && cd ..
 ENV PATH="/charon/bin:${PATH}"
 ENV PATH="/aeneas/bin:${PATH}"
+
+# Install Lean
+RUN curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- -y
+ENV PATH="/root/.elan/bin:$PATH"
+RUN elan toolchain install leanprover/lean4:stable
+RUN cd aeneas/backends/lean && lake build && cd ..
