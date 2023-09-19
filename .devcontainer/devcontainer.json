@@ -6,7 +6,8 @@
         "vscode": {
             "extensions": [
                 "leanprover.lean4",
-                "rust-lang.rust-analyzer"
+                "rust-lang.rust-analyzer",
+                "ms-azuretools.vscode-docker"
             ]
         }
     }
