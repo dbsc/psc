@@ -3,19 +3,15 @@ open Lake DSL
 
 require base from "/aeneas/backends/lean"
 
-package «psc» {
+package «test» {
   -- add package configuration options here
 }
 
-lean_lib «Psc» {
+lean_lib «Test» {
   -- add library configuration options here
 }
 
-lean_lib «Base» {
-  srcDir := "/aeneas/backends/lean"
-}
-
 @[default_target]
-lean_exe «psc» {
+lean_exe «test» {
   root := `Main
 }
