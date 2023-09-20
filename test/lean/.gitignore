@@ -1,4 +1,5 @@
 /build
 /lake-packages/*
 /Test
+Test.lean
 *.llbc
