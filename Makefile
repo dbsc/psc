@@ -6,10 +6,7 @@ lake:
 	lake build
 
 charon:
-	charon --opaque=main
-
-aeneas:
-	aeneas.exe psc.llbc -backend lean
+	charon --opaque=main --dest=./test/lean --crate test
 
 clean:
 	rm -rf *.llbc
