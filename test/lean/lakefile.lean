@@ -1,13 +1,13 @@
 import Lake
 open Lake DSL
 
-require base from "/aeneas/backends/lean"
+require base from "../../../../aeneas/backends/lean"
 
-package «test» {
+package «psc» {
   -- add package configuration options here
 }
 
-lean_lib «Test» {
+lean_lib «Psc» {
   -- add library configuration options here
 }
 

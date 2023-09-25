@@ -13,8 +13,8 @@ aeneas:
 	aeneas.exe psc.llbc -backend lean
 
 charon:
-	# charon --opaque=main --dest=./test/lean
-	$(MAKE) -C ../.. charon
+	charon --opaque=main --dest=./test/lean
+	# $(MAKE) -C ../.. charon
 
 clean:
 	rm -rf *.llbc
