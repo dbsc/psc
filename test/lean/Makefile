@@ -1,9 +1,6 @@
-.PHONY: all
+.PHONY: all build aeneas charon clean
 
 all: charon aeneas
-
-lake-packages:
-	lake update
 
 build:
 	lake update
@@ -14,7 +11,6 @@ aeneas:
 
 charon:
 	charon --opaque=main --dest=./test/lean
-	# $(MAKE) -C ../.. charon
 
 clean:
 	rm -rf *.llbc

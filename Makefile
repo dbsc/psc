@@ -1,12 +1,4 @@
-.PHONY: charon aeneas clean
-
-all: charon aeneas
-
-lake:
-	lake build
-
-charon:
-	charon --opaque=main --dest=./test/lean --crate test
+.PHONY: clean
 
 clean:
 	rm -rf *.llbc

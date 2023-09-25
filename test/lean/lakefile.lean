@@ -12,6 +12,6 @@ lean_lib «Psc» {
 }
 
 @[default_target]
-lean_exe «test» {
+lean_exe «psc» {
   root := `Main
 }
