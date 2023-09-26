@@ -1,7 +1,7 @@
 import Lake
 open Lake DSL
 
-require base from "../../../../aeneas/backends/lean"
+require base from git "https://github.com/AeneasVerif/aeneas.git"@"main"/"backends/lean"
 
 package «psc» {
   -- add package configuration options here
