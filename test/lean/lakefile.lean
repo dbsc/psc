@@ -13,5 +13,5 @@ lean_lib «Psc» {
 
 @[default_target]
 lean_exe «psc» {
-  root := `Psc
+  root := `Proofs
 }
