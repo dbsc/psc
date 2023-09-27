@@ -1,13 +1,12 @@
 .PHONY: all build aeneas charon clean
 
-all: charon aeneas
+all: charon aeneas build
 
 build:
-	lake update
 	lake build
 
 aeneas:
-	aeneas.exe psc.llbc -backend lean
+	aeneas.exe psc.llbc -backend lean -no-gen-lib-entry
 
 charon:
 	charon --opaque=main --dest=./test/lean
