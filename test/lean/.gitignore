@@ -1,5 +1,4 @@
 /build
 /lake-packages/*
-/Psc
-Psc.lean
+/Test
 *.llbc
