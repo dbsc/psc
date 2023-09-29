@@ -1,8 +1,7 @@
 use std::env;
 use std::process;
 
-mod min;
-mod mul2_add1;
+mod functions;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -22,5 +21,5 @@ fn main() {
         process::exit(1);
     });
 
-    println!("The minimum of {} and {} is {}", num1, num2, min::min(num1, num2));
+    println!("The minimum of {} and {} is {}", num1, num2, functions::min(num1, num2));
 }
