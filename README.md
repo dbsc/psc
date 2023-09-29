@@ -17,4 +17,4 @@ To build, simply run `make`.
 ## Tests
 The tests can be run with `make test`.
 
-For code that is reached from the `main.rs` entry point, `charon` and `aeneas` generate provable code in the `test/lean/Test` folder. Proofs should be written in `test/lean/Proofs.lean`.
+For code that is reached from the `main.rs` entry point, `charon` and `aeneas` generate provable code in the `test/lean/Test` folder. Proofs should be written in `test/lean/Proofs.lean`. You can find a nice tutorial on aeneas proofs [here](https://github.com/AeneasVerif/aeneas/blob/main/tests/lean/Tutorial.lean).
