@@ -1,27 +1,35 @@
-FROM fedora:latest
+FROM ubuntu:focal
 
 # Update packages
-RUN dnf -y update
-RUN dnf install -y git rsync dune
+RUN apt-get -y update
+RUN apt-get install -y git rsync dune make build-essential
+
+# hadolint ignore=DL3008
+RUN apt-get update && apt-get install --no-install-recommends -y  locales curl xz-utils vim  ca-certificates && apt-get clean && rm -rf /var/lib/apt/lists/* \
+      && mkdir -m 0755 /nix && groupadd -r nixbld && chown root /nix \
+      && for n in $(seq 1 10); do useradd -c "Nix build user $n" -d /var/empty -g nixbld -G nixbld -M -N -r -s "$(command -v nologin)" "nixbld$n"; done
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+RUN set -o pipefail && curl -L https://nixos.org/nix/install | bash
+
+# Fixes locale-related issues: https://gitlab.haskell.org/ghc/ghc/-/issues/8118
+RUN locale-gen en_US.UTF-8
+ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8'
+ENV USER=root
+RUN echo "source $HOME/.nix-profile/etc/profile.d/nix.sh" >> "$HOME/.bashrc"
+
+# Build charon and aeneas
+RUN git clone https://github.com/AeneasVerif/charon.git 
+RUN . "$HOME/.nix-profile/etc/profile.d/nix.sh" && cd charon && nix build .#charon -o nix-build --extra-experimental-features nix-command --extra-experimental-features flakes && make build-charon-rust && cd ..
+RUN git clone https://github.com/AeneasVerif/aeneas.git 
+RUN . "$HOME/.nix-profile/etc/profile.d/nix.sh" && cd aeneas && nix build .#aeneas -o nix-build --extra-experimental-features nix-command --extra-experimental-features flakes && cd ..
+
+# Setup charon and aeneas
+ENV PATH="/charon//bin:${PATH}"
+ENV PATH="/aeneas/nix-build/bin:${PATH}"
 
 # Install Rust
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH=/root/.cargo/bin:$PATH
-
-# Install and setup OCaml
-RUN dnf -y install ocaml opam gmp-devel
-RUN opam init -y
-RUN opam switch create 4.13.1+options
-RUN opam install -y ppx_deriving visitors easy_logging zarith yojson core_unix odoc unionFind ocamlgraph
-
-# Setup charon and aeneas
-RUN git clone https://github.com/AeneasVerif/charon.git && cd charon && git checkout 1b96962ee7b1fb1b7fcd03a68f7a5a95d59e71a1 && cd ..
-RUN git clone https://github.com/AeneasVerif/aeneas.git && cd aeneas && git checkout 7fc7c82aa61d782b335e7cf37231fd9998cd0d89 && cd ..
-RUN eval $(opam env) && cd charon && make && cd ..
-RUN opam install -y ./charon/charon-ml
-RUN eval $(opam env) && cd aeneas && make && cd ..
-ENV PATH="/charon/bin:${PATH}"
-ENV PATH="/aeneas/bin:${PATH}"
 
 # Install Lean
 RUN curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- -y

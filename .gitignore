@@ -1,3 +1,4 @@
 target
 psc.llbc
 build
+/lake-packages/*
