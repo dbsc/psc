@@ -1,4 +1,4 @@
-import Test.Funs
+import Test
 
 open Primitives
 open Result
