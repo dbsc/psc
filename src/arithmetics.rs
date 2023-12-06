@@ -1,6 +1,3 @@
-
-// pub struct BigInt([u64; 4]);
-
 // #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub struct BigInt<const N: usize>{
     num: [u64; N]

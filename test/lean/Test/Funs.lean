@@ -7,20 +7,20 @@ open Primitives
 namespace test
 
 /- [test::arithmetics::{test::arithmetics::BigInt<N>}::default]: forward function
-   Source: 'src/arithmetics.rs', lines 16:4-16:24 -/
+   Source: 'src/arithmetics.rs', lines 13:4-13:24 -/
 def arithmetics.BigInt.default (N : Usize) : Result (arithmetics.BigInt N) :=
   let a := Array.repeat U64 N 0#u64
   Result.ret { num := a }
 
 /- Trait implementation: [test::arithmetics::{test::arithmetics::BigInt<N>}]
-   Source: 'src/arithmetics.rs', lines 15:0-15:42 -/
+   Source: 'src/arithmetics.rs', lines 12:0-12:42 -/
 def core.default.DefaulttestarithmeticsBigIntNInst (N : Usize) :
   core.default.Default (arithmetics.BigInt N) := {
   default := arithmetics.BigInt.default N
 }
 
 /- [test::arithmetics::adc_for_add_with_carry]: forward function
-   Source: 'src/arithmetics.rs', lines 33:0-33:67 -/
+   Source: 'src/arithmetics.rs', lines 30:0-30:67 -/
 def arithmetics.adc_for_add_with_carry
   (a : U64) (b : U64) (carry : U8) : Result U8 :=
   do
@@ -30,17 +30,11 @@ def arithmetics.adc_for_add_with_carry
     let i2 ← Scalar.cast .U128 carry
     let tmp ← i1 + i2
     let _ ← Scalar.cast .U64 tmp
-    let i3 ← 1024#u128 * 1024#u128
-    let i4 ← i3 * 1024#u128
-    let i5 ← i4 * 1024#u128
-    let i6 ← i5 * 1024#u128
-    let i7 ← i6 * 1024#u128
-    let _ ← i7 * 16#u128
-    let i8 ← tmp >>> 64#i32
-    Scalar.cast .U8 i8
+    let i3 ← tmp >>> 64#i32
+    Scalar.cast .U8 i3
 
 /- [test::arithmetics::adc_for_add_with_carry]: backward function 0
-   Source: 'src/arithmetics.rs', lines 33:0-33:67 -/
+   Source: 'src/arithmetics.rs', lines 30:0-30:67 -/
 def arithmetics.adc_for_add_with_carry_back
   (a : U64) (b : U64) (carry : U8) : Result U64 :=
   do
@@ -50,18 +44,12 @@ def arithmetics.adc_for_add_with_carry_back
     let i2 ← Scalar.cast .U128 carry
     let tmp ← i1 + i2
     let a0 ← Scalar.cast .U64 tmp
-    let i3 ← 1024#u128 * 1024#u128
-    let i4 ← i3 * 1024#u128
-    let i5 ← i4 * 1024#u128
-    let i6 ← i5 * 1024#u128
-    let i7 ← i6 * 1024#u128
-    let _ ← i7 * 16#u128
-    let i8 ← tmp >>> 64#i32
-    let _ ← Scalar.cast .U8 i8
+    let i3 ← tmp >>> 64#i32
+    let _ ← Scalar.cast .U8 i3
     Result.ret a0
 
 /- [test::arithmetics::{test::arithmetics::BigInt<N>#1}::add_with_carry]: forward function
-   Source: 'src/arithmetics.rs', lines 82:4-82:54 -/
+   Source: 'src/arithmetics.rs', lines 78:4-78:54 -/
 def arithmetics.BigInt.add_with_carry
   (N : Usize) (self : arithmetics.BigInt N) (other : arithmetics.BigInt N) :
   Result Bool
@@ -76,7 +64,7 @@ def arithmetics.BigInt.add_with_carry
   else Result.ret (0#u8 != 0#u8)
 
 /- [test::arithmetics::{test::arithmetics::BigInt<N>#1}::add_with_carry]: backward function 0
-   Source: 'src/arithmetics.rs', lines 82:4-82:54 -/
+   Source: 'src/arithmetics.rs', lines 78:4-78:54 -/
 def arithmetics.BigInt.add_with_carry_back
   (N : Usize) (self : arithmetics.BigInt N) (other : arithmetics.BigInt N) :
   Result (arithmetics.BigInt N)
@@ -92,7 +80,7 @@ def arithmetics.BigInt.add_with_carry_back
   else Result.ret self
 
 /- Trait implementation: [test::arithmetics::{test::arithmetics::BigInt<N>#1}]
-   Source: 'src/arithmetics.rs', lines 78:0-78:45 -/
+   Source: 'src/arithmetics.rs', lines 74:0-74:45 -/
 def test.arithmetics.BigIntegertestarithmeticsBigIntNInst (N : Usize) :
   arithmetics.BigInteger (arithmetics.BigInt N) := {
   add_with_carry := arithmetics.BigInt.add_with_carry N

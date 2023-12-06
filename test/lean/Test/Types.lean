@@ -6,7 +6,7 @@ open Primitives
 namespace test
 
 /- [test::arithmetics::BigInt]
-   Source: 'src/arithmetics.rs', lines 5:0-5:33 -/
+   Source: 'src/arithmetics.rs', lines 2:0-2:33 -/
 structure arithmetics.BigInt (N : Usize) where
   num : Array U64 N
 
@@ -16,7 +16,7 @@ structure core.default.Default (Self : Type) where
   default : Result Self
 
 /- Trait declaration: [test::arithmetics::BigInteger]
-   Source: 'src/arithmetics.rs', lines 46:0-46:20 -/
+   Source: 'src/arithmetics.rs', lines 42:0-42:20 -/
 structure arithmetics.BigInteger (Self : Type) where
   add_with_carry : Self → Self → Result Bool
   add_with_carry_back : Self → Self → Result Self
