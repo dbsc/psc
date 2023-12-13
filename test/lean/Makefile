@@ -6,7 +6,7 @@ build:
 	lake build
 
 aeneas:
-	aeneas test.llbc -backend lean -no-gen-lib-entry -split-files
+	aeneas test.llbc -backend lean
 
 charon:
 	charon --opaque=main --dest=./test/lean --crate test

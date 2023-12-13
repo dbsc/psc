@@ -3,7 +3,8 @@
 
 // mod functions;
 // mod ff;
-mod arithmetics;
+mod bigint;
+mod arithmetic;
 // mod bls12;
 
 fn main() {

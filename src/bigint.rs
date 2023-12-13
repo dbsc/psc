@@ -154,8 +154,6 @@ impl<const N: usize> BigInt<N> {
 
 impl<const N: usize> BigInteger for BigInt<N> {
     const NUM_LIMBS: usize = N;
-
-    #[inline]
     fn add_with_carry(&mut self, other: &Self) -> bool {
         {
             use arithmetic::adc_for_add_with_carry as adc;
