@@ -1,6 +1,23 @@
 /// Reference
 /// arkworks/algebra ff/src/biginteger/mod.rs
 
+macro_rules! adc {
+    ($a:expr, $b:expr, &mut $carry:expr$(,)?) => {{
+        let tmp = ($a as u128) + ($b as u128) + ($carry as u128);
+        $carry = (tmp >> 64) as u64;
+        tmp as u64
+    }};
+}
+
+#[macro_export]
+macro_rules! sbb {
+    ($a:expr, $b:expr, &mut $borrow:expr$(,)?) => {{
+        let tmp = (1u128 << 64) + ($a as u128) - ($b as u128) - ($borrow as u128);
+        $borrow = if tmp >> 64 == 0 { 1 } else { 0 };
+        tmp as u64
+    }};
+}
+
 use crate::arithmetic;
 
 pub struct BigInt<const N: usize>(pub [u64; N]);
@@ -38,107 +55,134 @@ impl<const N: usize> BigInt<N> {
         (((self.0[0] << 62) >> 62) % 4) as u8
     }
 
-    // pub const fn const_shr(&self) -> Self {
-    //     let mut result = *self;
-    //     let mut t = 0;
-    //     crate::const_for!((i in 0..N) {
-    //         let a = result.0[N - i - 1];
-    //         let t2 = a << 63;
-    //         result.0[N - i - 1] >>= 1;
-    //         result.0[N - i - 1] |= t;
-    //         t = t2;
-    //     });
-    //     result
-    // }
+    // TODO: Ideally this function should be const
+    pub fn const_shr(&self) -> Self {
+        // TODO: Remove later
+        panic!();
 
-    // const fn const_geq(&self, other: &Self) -> bool {
-    //     const_for!((i in 0..N) {
-    //         let a = self.0[N - i - 1];
-    //         let b = other.0[N - i - 1];
-    //         if a < b {
-    //             return false;
-    //         } else if a > b {
-    //             return true;
-    //         }
-    //     });
-    //     true
-    // }
+        let mut result: Self = *self;
+        let mut t = 0;
+        // crate::const_for!((i in 0..N) { // Probably crashes due to N
+        for i in 0..N {
+            let a = result.0[N - i - 1];
+            let t2 = a << 63;
+            result.0[N - i - 1] >>= 1;
+            result.0[N - i - 1] |= t;
+            t = t2;
+        }
+        // });
+        result
+    }
 
-    // pub const fn two_adic_valuation(mut self) -> u32 {
-    //     let mut two_adicity = 0;
-    //     assert!(self.const_is_odd());
-    //     // Since `self` is odd, we can always subtract one
-    //     // without a borrow
-    //     self.0[0] -= 1;
-    //     while self.const_is_even() {
-    //         self = self.const_shr();
-    //         two_adicity += 1;
-    //     }
-    //     two_adicity
-    // }
+    // TODO: Ideally this function should be const
+    fn const_geq(&self, other: &Self) -> bool {
+        let mut i = 0;
+        while i < N {
+            let a = self.0[i];
+            i += 1;
+        }
+        false
+    }
 
-    // pub const fn two_adic_coefficient(mut self) -> Self {
-    //     assert!(self.const_is_odd());
-    //     // Since `self` is odd, we can always subtract one
-    //     // without a borrow
-    //     self.0[0] -= 1;
-    //     while self.const_is_even() {
-    //         self = self.const_shr();
-    //     }
-    //     assert!(self.const_is_odd());
-    //     self
-    // }
+    // TODO: Ideally this function should be const
+    pub fn two_adic_valuation(mut self) -> u32 {
+        // TODO: Remove later
+        panic!();
 
-    // pub const fn divide_by_2_round_down(mut self) -> Self {
-    //     if self.const_is_odd() {
-    //         self.0[0] -= 1;
-    //     }
-    //     self.const_shr()
-    // }
+        let mut two_adicity = 0;
+        assert!(self.const_is_odd());
+        // Since `self` is odd, we can always subtract one
+        // without a borrow
+        self.0[0] -= 1;
+        while self.const_is_even() {
+            self = self.const_shr();
+            two_adicity += 1;
+        }
+        two_adicity
+    }
+
+    // TODO: Ideally this function should be const
+    pub fn two_adic_coefficient(mut self) -> Self {
+        // TODO: Remove later
+        panic!();
+
+        assert!(self.const_is_odd());
+        // Since `self` is odd, we can always subtract one
+        // without a borrow
+        self.0[0] -= 1;
+        while self.const_is_even() {
+            self = self.const_shr();
+        }
+        assert!(self.const_is_odd());
+        self
+    }
+
+    // TODO: Ideally this function should be const
+    pub fn divide_by_2_round_down(mut self) -> Self {
+        // TODO: Remove this later
+        panic!();
+
+        if self.const_is_odd() {
+            self.0[0] -= 1; // This expression crashes Aeneas
+        }
+        self.const_shr()
+    }
 
     pub const fn const_num_bits(self) -> u32 {
         ((N - 1) * 64) as u32 + (64 - self.0[N - 1].leading_zeros())
     }
 
-    // pub(crate) const fn const_sub_with_borrow(mut self, other: &Self) -> (Self, bool) {
-    //     let mut borrow = 0;
+    pub(crate) const fn const_sub_with_borrow(mut self, other: &Self) -> (Self, bool) {
+        // TODO: Remove this later
+        panic!();
 
-    //     const_for!((i in 0..N) {
-    //         self.0[i] = sbb!(self.0[i], other.0[i], &mut borrow);
-    //     });
+        let mut borrow = 0;
 
-    //     (self, borrow != 0)
-    // }
+        crate::const_for!((i in 0..N) {
+            self.0[i] = sbb!(self.0[i], other.0[i], &mut borrow); // This expression crashes Aeneas
+        });
 
-    // pub(crate) const fn const_add_with_carry(mut self, other: &Self) -> (Self, bool) {
-    //     let mut carry = 0;
+        (self, borrow != 0)
+    }
 
-    //     crate::const_for!((i in 0..N) {
-    //         self.0[i] = adc!(self.0[i], other.0[i], &mut carry);
-    //     });
+    pub(crate) const fn const_add_with_carry(mut self, other: &Self) -> (Self, bool) {
+        // TODO: Remove this later
+        panic!();
 
-    //     (self, carry != 0)
-    // }
+        let mut carry = 0;
 
-    // const fn const_mul2_with_carry(mut self) -> (Self, bool) {
-    //     let mut last = 0;
-    //     crate::const_for!((i in 0..N) {
-    //         let a = self.0[i];
-    //         let tmp = a >> 63;
-    //         self.0[i] <<= 1;
-    //         self.0[i] |= last;
-    //         last = tmp;
-    //     });
-    //     (self, last != 0)
-    // }
+        crate::const_for!((i in 0..N) {
+            self.0[i] = adc!(self.0[i], other.0[i], &mut carry); // This expression crashes Aeneas
+        });
 
-    // pub(crate) const fn const_is_zero(&self) -> bool {
-    //     let mut is_zero = true;
-    //     crate::const_for!((i in 0..N) {
-    //         is_zero &= self.0[i] == 0;
-    //     });
-    //     is_zero
-    // }
+        (self, carry != 0)
+    }
+
+    const fn const_mul2_with_carry(mut self) -> (Self, bool) {
+        // TODO: Remove this later
+        panic!();
+
+        let mut last = 0;
+        crate::const_for!((i in 0..N) {
+            let a = self.0[i]; // This group of lines crashes Aeneas
+            let tmp = a >> 63;
+            self.0[i] <<= 1;
+            self.0[i] |= last;
+            last = tmp;
+        });
+        (self, last != 0)
+    }
+
+    pub(crate) const fn const_is_zero(&self) -> bool {
+        // TODO: Remove this later
+        panic!();
+
+        let mut is_zero = true;
+        crate::const_for!((i in 0..N) {
+            is_zero &= self.0[i] == 0; // This expression crashes Aeneas
+        });
+        is_zero
+    }
 
     // pub const fn montgomery_r(&self) -> Self {
     //     let two_pow_n_times_64 = crate::const_helpers::RBuffer::<N>([0u64; N], 1);
@@ -153,7 +197,8 @@ impl<const N: usize> BigInt<N> {
 }
 
 impl<const N: usize> BigInteger for BigInt<N> {
-    const NUM_LIMBS: usize = N;
+    // const NUM_LIMBS: usize = N;
+
     fn add_with_carry(&mut self, other: &Self) -> bool {
         {
             use arithmetic::adc_for_add_with_carry as adc;
@@ -180,9 +225,9 @@ impl<const N: usize> BigInteger for BigInt<N> {
             if N >= 6 {
                 carry = adc(&mut a[5], b[5], carry);
             }
-            for i in 6..N {
-                carry = adc(&mut a[i], b[i], carry);
-            }
+            // for i in 6..N { // This crashes Aeneas
+            //     carry = adc(&mut a[i], b[i], carry);
+            // }
             carry != 0
         }
     }
@@ -213,9 +258,9 @@ impl<const N: usize> BigInteger for BigInt<N> {
         if N >= 6 {
             borrow = sbb(&mut a[5], b[5], borrow);
         }
-        for i in 6..N {
-            borrow = sbb(&mut a[i], b[i], borrow);
-        }
+        // for i in 6..N { // This crashes Aeneas (probably the N)
+        //     borrow = sbb(&mut a[i], b[i], borrow);
+        // }
         borrow != 0
     }
 
@@ -223,13 +268,13 @@ impl<const N: usize> BigInteger for BigInt<N> {
     #[allow(unused)]
     fn mul2(&mut self) -> bool {
         let mut last = 0;
-        for i in 0..N {
-            let a = &mut self.0[i];
-            let tmp = *a >> 63;
-            *a <<= 1;
-            *a |= last;
-            last = tmp;
-        }
+        // for i in 0..N { // This crashes Aeneas (probably the N)
+        //     let a = &mut self.0[i];
+        //     let tmp = *a >> 63;
+        //     *a <<= 1;
+        //     *a |= last;
+        //     last = tmp;
+        // }
         last != 0
     }
 
@@ -260,16 +305,17 @@ impl<const N: usize> BigInteger for BigInt<N> {
     //     }
     // }
 
-    fn div2(&mut self) {
-        let mut t = 0;
-        for i in 0..N {
-            let a = &mut self.0[N - i - 1];
-            let t2 = *a << 63;
-            *a >>= 1;
-            *a |= t;
-            t = t2;
-        }
-    }
+    // fn div2(&mut self) {
+    //     // Aeneas gives error
+    //     let mut t = 0;
+    //     for i in 0..N {
+    //         let a = &mut self.0[N - i - 1];
+    //         let t2 = *a << 63;
+    //         *a >>= 1;
+    //         *a |= t;
+    //         t = t2;
+    //     }
+    // }
 
     // fn divn(&mut self, mut n: u32) {
     //     if n >= (64 * N) as u32 {
@@ -310,22 +356,29 @@ impl<const N: usize> BigInteger for BigInt<N> {
 
     #[inline]
     fn is_zero(&self) -> bool {
-        self.0.iter().all(|&e| e == 0)
-    }
+        // Remove this later
+        panic!();
 
-    #[inline]
-    fn num_bits(&self) -> u32 {
-        let mut ret = N as u32 * 64;
-        for i in self.0.iter().rev() {
-            let leading = i.leading_zeros();
-            ret -= leading;
-            if leading != 64 {
-                break;
-            }
+        let mut ret = true;
+        for i in self.0 {
+            ret = ret && (i != 0);
         }
-
         ret
     }
+
+    // #[inline]
+    // fn num_bits(&self) -> u32 {
+    //     let mut ret = N as u32 * 64;
+    //     for i in self.0.iter().rev() {
+    //         let leading = i.leading_zeros();
+    //         ret -= leading;
+    //         if leading != 64 {
+    //             break;
+    //         }
+    //     }
+
+    //     ret
+    // }
 
     #[inline]
     fn get_bit(&self, i: usize) -> bool {
@@ -338,70 +391,81 @@ impl<const N: usize> BigInteger for BigInt<N> {
         }
     }
 
-    #[inline]
-    fn from_bits_be(bits: &[bool]) -> Self {
-        let mut res = Self::default();
-        let mut acc: u64 = 0;
+    // #[inline]
+    // fn from_bits_be(bits: &[bool]) -> Self {
+    //     let mut res = Self::default();
+    //     let mut acc: u64 = 0;
 
-        let mut bits = bits.to_vec();
-        bits.reverse();
-        for (i, bits64) in bits.chunks(64).enumerate() {
-            for bit in bits64.iter().rev() {
-                acc <<= 1;
-                acc += *bit as u64;
-            }
-            res.0[i] = acc;
-            acc = 0;
-        }
-        res
-    }
+    //     let mut bits = bits.to_vec();
+    //     bits.reverse();
+    //     for (i, bits64) in bits.chunks(64).enumerate() {
+    //         for bit in bits64.iter().rev() {
+    //             acc <<= 1;
+    //             acc += *bit as u64;
+    //         }
+    //         res.0[i] = acc;
+    //         acc = 0;
+    //     }
+    //     res
+    // }
 
-    fn from_bits_le(bits: &[bool]) -> Self {
-        let mut res = Self::zero();
-        for (bits64, res_i) in bits.chunks(64).zip(&mut res.0) {
-            for (i, bit) in bits64.iter().enumerate() {
-                *res_i |= (*bit as u64) << i;
-            }
-        }
-        res
-    }
+    // fn from_bits_le(bits: &[bool]) -> Self {
+    //     let mut res = Self::zero();
+    //     for (bits64, res_i) in bits.chunks(64).zip(&mut res.0) {
+    //         for (i, bit) in bits64.iter().enumerate() {
+    //             *res_i |= (*bit as u64) << i;
+    //         }
+    //     }
+    //     res
+    // }
 
-    #[inline]
-    fn to_bytes_be(&self) -> Vec<u8> {
-        let mut le_bytes = self.to_bytes_le();
-        le_bytes.reverse();
-        le_bytes
-    }
+    // #[inline]
+    // fn to_bytes_be(&self) -> Vec<u8> {
+    //     let mut le_bytes = self.to_bytes_le();
+    //     le_bytes.reverse();
+    //     le_bytes
+    // }
 
-    #[inline]
-    fn to_bytes_le(&self) -> Vec<u8> {
-        let array_map = self.0.iter().map(|limb| limb.to_le_bytes());
-        let mut res = Vec::with_capacity(N * 8);
-        for limb in array_map {
-            res.extend_from_slice(&limb);
-        }
-        res
-    }
+    // #[inline]
+    // fn to_bytes_le(&self) -> Vec<u8> {
+    //     let array_map = self.0.iter().map(|limb| limb.to_le_bytes());
+    //     let mut res = Vec::with_capacity(N * 8);
+    //     for limb in array_map {
+    //         res.extend_from_slice(&limb);
+    //     }
+    //     res
+    // }
 }
 
 pub trait BigInteger
 {
-    const NUM_LIMBS: usize;
+    // const NUM_LIMBS: usize;
 
     fn add_with_carry(&mut self, other: &Self) -> bool;
     fn sub_with_borrow(&mut self, other: &Self) -> bool;
     fn mul2(&mut self) -> bool;
     // fn muln(&mut self, amt: u32);
-    fn div2(&mut self);
+    // fn div2(&mut self);
     // fn divn(&mut self, amt: u32);
     fn is_odd(&self) -> bool;
     fn is_even(&self) -> bool;
     fn is_zero(&self) -> bool;
-    fn num_bits(&self) -> u32;
+    // fn num_bits(&self) -> u32;
     fn get_bit(&self, i: usize) -> bool;
-    fn from_bits_be(bits: &[bool]) -> Self;
-    fn from_bits_le(bits: &[bool]) -> Self;
-    fn to_bytes_be(&self) -> Vec<u8>;
-    fn to_bytes_le(&self) -> Vec<u8>;
+    // fn from_bits_be(bits: &[bool]) -> Self;
+    // fn from_bits_le(bits: &[bool]) -> Self;
+    // fn to_bytes_be(&self) -> Vec<u8>;
+    // fn to_bytes_le(&self) -> Vec<u8>;
     // fn find_wnaf(&self, w: usize) -> Option<Vec<i64>>;
+}
+
+#[macro_export]
+macro_rules! const_for {
+    (($i:ident in $start:tt..$end:tt)  $code:expr ) => {{
+        let mut $i = $start;
+        while $i < $end {
+            $code
+            $i += 1;
+        }
+    }};
 }
