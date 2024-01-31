@@ -74,14 +74,33 @@ impl<const N: usize> BigInt<N> {
         result
     }
 
+        // const fn const_geq(&self, other: &Self) -> bool {
+    //     const_for!((i in 0..N) {
+    //         let a = self.0[N - i - 1];
+    //         let b = other.0[N - i - 1];
+    //         if a < b {
+    //             return false;
+    //         } else if a > b {
+    //             return true;
+    //         }
+    //     });
+    //     true
+    // }
+
     // TODO: Ideally this function should be const
     fn const_geq(&self, other: &Self) -> bool {
         let mut i = 0;
         while i < N {
-            let a = self.0[i];
+            let a = self.0[N - i - 1];
+            let b = other.0[N - i - 1];
+            if a < b {
+                return false;
+            } else if a > b {
+                return true;
+            }
             i += 1;
         }
-        false
+        true
     }
 
     // TODO: Ideally this function should be const
@@ -268,54 +287,60 @@ impl<const N: usize> BigInteger for BigInt<N> {
     #[allow(unused)]
     fn mul2(&mut self) -> bool {
         let mut last = 0;
-        // for i in 0..N { // This crashes Aeneas (probably the N)
-        //     let a = &mut self.0[i];
-        //     let tmp = *a >> 63;
-        //     *a <<= 1;
-        //     *a |= last;
-        //     last = tmp;
-        // }
+        let mut i = 0;
+        while i < N {
+                let a = &mut self.0[i];
+                let tmp = *a >> 63;
+                *a <<= 1;
+                *a |= last;
+                last = tmp;
+                i += 1;
+        }
         last != 0
     }
 
-    // fn muln(&mut self, mut n: u32) {
-    //     if n >= (64 * N) as u32 {
-    //         *self = Self::from(0u64);
-    //         return;
-    //     }
+    fn muln(&mut self, mut n: u32) {
+        panic!();
 
-    //     while n >= 64 {
-    //         let mut t = 0;
-    //         for i in 0..N {
-    //             core::mem::swap(&mut t, &mut self.0[i]);
-    //         }
-    //         n -= 64;
-    //     }
+        if n >= (64 * N) as u32 {
+            // *self = Self::from(0u64);
+            return;
+        }
 
-    //     if n > 0 {
-    //         let mut t = 0;
-    //         #[allow(unused)]
-    //         for i in 0..N {
-    //             let a = &mut self.0[i];
-    //             let t2 = *a >> (64 - n);
-    //             *a <<= n;
-    //             *a |= t;
-    //             t = t2;
-    //         }
-    //     }
-    // }
+        while n >= 64 {
+            let mut t = 0;
+            for i in 0..N {
+                core::mem::swap(&mut t, &mut self.0[i]);
+            }
+            n -= 64;
+        }
 
-    // fn div2(&mut self) {
-    //     // Aeneas gives error
-    //     let mut t = 0;
-    //     for i in 0..N {
-    //         let a = &mut self.0[N - i - 1];
-    //         let t2 = *a << 63;
-    //         *a >>= 1;
-    //         *a |= t;
-    //         t = t2;
-    //     }
-    // }
+        if n > 0 {
+            let mut t = 0;
+            #[allow(unused)]
+            for i in 0..N {
+                let a = &mut self.0[i];
+                let t2 = *a >> (64 - n);
+                *a <<= n;
+                *a |= t;
+                t = t2;
+            }
+        }
+    }
+
+    fn div2(&mut self) {
+        panic!();
+
+        // Aeneas gives error
+        let mut t = 0;
+        for i in 0..N {
+            let a = &mut self.0[N - i - 1];
+            let t2 = *a << 63;
+            *a >>= 1;
+            *a |= t;
+            t = t2;
+        }
+    }
 
     // fn divn(&mut self, mut n: u32) {
     //     if n >= (64 * N) as u32 {
@@ -356,12 +381,11 @@ impl<const N: usize> BigInteger for BigInt<N> {
 
     #[inline]
     fn is_zero(&self) -> bool {
-        // Remove this later
-        panic!();
-
         let mut ret = true;
-        for i in self.0 {
-            ret = ret && (i != 0);
+        let mut i = 0;
+        while i < N {
+            ret = ret && (self.0[i] != 0);
+            i += 1;
         }
         ret
     }
@@ -444,8 +468,8 @@ pub trait BigInteger
     fn add_with_carry(&mut self, other: &Self) -> bool;
     fn sub_with_borrow(&mut self, other: &Self) -> bool;
     fn mul2(&mut self) -> bool;
-    // fn muln(&mut self, amt: u32);
-    // fn div2(&mut self);
+    fn muln(&mut self, amt: u32);
+    fn div2(&mut self);
     // fn divn(&mut self, amt: u32);
     fn is_odd(&self) -> bool;
     fn is_even(&self) -> bool;
