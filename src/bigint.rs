@@ -244,9 +244,14 @@ impl<const N: usize> BigInteger for BigInt<N> {
             if N >= 6 {
                 carry = adc(&mut a[5], b[5], carry);
             }
-            // for i in 6..N { // This crashes Aeneas
-            //     carry = adc(&mut a[i], b[i], carry);
-            // }
+            if N >= 6 {
+                let mut i = 5;
+                while i < N {
+                    carry = adc(&mut a[i], b[i], carry);
+                    i += 1;
+                }
+            }
+            
             carry != 0
         }
     }
@@ -277,9 +282,12 @@ impl<const N: usize> BigInteger for BigInt<N> {
         if N >= 6 {
             borrow = sbb(&mut a[5], b[5], borrow);
         }
-        // for i in 6..N { // This crashes Aeneas (probably the N)
-        //     borrow = sbb(&mut a[i], b[i], borrow);
-        // }
+        let mut i = 6;
+        while i < N {
+            borrow = sbb(&mut a[i], b[i], borrow);
+            i += 1;
+        }
+        
         borrow != 0
     }
 
