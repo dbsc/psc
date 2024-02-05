@@ -35,5 +35,5 @@ ENV PATH="/aeneas/nix-build/bin:${PATH}"
 # Install Lean
 RUN curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- -y
 ENV PATH="/root/.elan/bin:$PATH"
-RUN elan toolchain install leanprover/lean4:stable
+RUN elan toolchain install leanprover/lean4:v4.6.0-rc1
 RUN cd aeneas/backends/lean && lake build && cd ..

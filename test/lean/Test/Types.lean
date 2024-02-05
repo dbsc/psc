@@ -18,7 +18,6 @@ structure core.default.Default (Self : Type) where
 /- Trait declaration: [test::arithmetics::BigInteger]
    Source: 'src/arithmetics.rs', lines 42:0-42:20 -/
 structure arithmetics.BigInteger (Self : Type) where
-  add_with_carry : Self → Self → Result Bool
-  add_with_carry_back : Self → Self → Result Self
+  add_with_carry : Self → Self → Result (Bool × Self)
 
 end test

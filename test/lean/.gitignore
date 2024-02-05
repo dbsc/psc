@@ -2,3 +2,4 @@
 /lake-packages/*
 *.llbc
 Test.lean
+.lake
