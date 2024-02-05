@@ -83,8 +83,13 @@ impl<const N: usize> BigInteger for BigInt<N> {
             let b = &other.num;
             let mut carry = 0;
 
-            if N >= 1 {
-                carry = adc(&mut a[0], b[0], carry);
+            // if N >= 1 {
+            //     carry = adc(&mut a[0], b[0], carry);
+            // }
+            let mut i = 0;
+            while i < N {
+                carry = adc(&mut a[i], b[i], carry);
+                i += 1;
             }
             // if N >= 2 {
             //     carry = adc(&mut a[1], b[1], carry);
