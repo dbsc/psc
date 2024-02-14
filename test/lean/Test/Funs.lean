@@ -34,21 +34,33 @@ def arithmetics.adc_for_add_with_carry
   let i5 ← Scalar.cast .U8 i4
   Result.ret (i5, a1)
 
+/- [test::arithmetics::{test::arithmetics::BigInt<N>#1}::add_with_carry]: loop 0:
+   Source: 'src/arithmetics.rs', lines 78:4-114:5 -/
+divergent def arithmetics.BigInt.add_with_carry_loop
+  (N : Usize) (a : Array U64 N) (b : Array U64 N) (carry : U8) (i : Usize) :
+  Result (Bool × (Array U64 N))
+  :=
+  if i < N
+  then
+    do
+    let (i1, index_mut_back) ← Array.index_mut_usize U64 N a i
+    let i2 ← Array.index_usize U64 N b i
+    let (carry1, i3) ← arithmetics.adc_for_add_with_carry i1 i2 carry
+    let i4 ← i + 1#usize
+    let a1 ← index_mut_back i3
+    arithmetics.BigInt.add_with_carry_loop N a1 b carry1 i4
+  else Result.ret (carry != 0#u8, a)
+
 /- [test::arithmetics::{test::arithmetics::BigInt<N>#1}::add_with_carry]:
    Source: 'src/arithmetics.rs', lines 78:4-78:54 -/
 def arithmetics.BigInt.add_with_carry
   (N : Usize) (self : arithmetics.BigInt N) (other : arithmetics.BigInt N) :
   Result (Bool × (arithmetics.BigInt N))
   :=
-  if N >= 1#usize
-  then
-    do
-    let (i, index_mut_back) ← Array.index_mut_usize U64 N self.num 0#usize
-    let i1 ← Array.index_usize U64 N other.num 0#usize
-    let (carry, i2) ← arithmetics.adc_for_add_with_carry i i1 0#u8
-    let a ← index_mut_back i2
-    Result.ret (carry != 0#u8, { num := a })
-  else Result.ret (0#u8 != 0#u8, self)
+  do
+  let (b, back) ←
+    arithmetics.BigInt.add_with_carry_loop N self.num other.num 0#u8 0#usize
+  Result.ret (b, { num := back })
 
 /- Trait implementation: [test::arithmetics::{test::arithmetics::BigInt<N>#1}]
    Source: 'src/arithmetics.rs', lines 74:0-74:45 -/
