@@ -1,4 +1,4 @@
-/// Reference
+/// References
 /// arkworks/algebra ff/src/biginteger/mod.rs
 
 macro_rules! adc {
@@ -18,6 +18,14 @@ macro_rules! sbb {
     }};
 }
 
+macro_rules! mac_with_carry {
+    ($a:expr, $b:expr, $c:expr, &mut $carry:expr$(,)?) => {{
+        let tmp = ($a as u128) + ($b as u128 * $c as u128) + ($carry as u128);
+        $carry = (tmp >> 64) as u64;
+        tmp as u64
+    }};
+}
+
 use crate::arithmetic;
 
 pub struct BigInt<const N: usize>(pub [u64; N]);
@@ -25,6 +33,12 @@ pub struct BigInt<const N: usize>(pub [u64; N]);
 impl<const N: usize> Default for BigInt<N> {
     fn default() -> Self {
         Self([0u64; N])
+    }
+}
+
+impl<const N: usize> Clone for BigInt<N> {
+    fn clone(&self) -> Self {
+        Self(self.0)
     }
 }
 
@@ -55,40 +69,22 @@ impl<const N: usize> BigInt<N> {
         (((self.0[0] << 62) >> 62) % 4) as u8
     }
 
-    // TODO: Ideally this function should be const
-    pub fn const_shr(&self) -> Self {
-        // TODO: Remove later
-        panic!();
-
-        let mut result: Self = *self;
+    pub fn shr(&self) -> Self {
+        let mut result = self.clone();
         let mut t = 0;
-        // crate::const_for!((i in 0..N) { // Probably crashes due to N
-        for i in 0..N {
+        let mut i = 0;
+        while i < N {
             let a = result.0[N - i - 1];
             let t2 = a << 63;
-            result.0[N - i - 1] >>= 1;
-            result.0[N - i - 1] |= t;
+            result.0[N - i - 1] = result.0[N - i - 1] >> 1;
+            result.0[N - i - 1] = result.0[N - i - 1] | t;
             t = t2;
+            i += 1;
         }
-        // });
         result
     }
 
-        // const fn const_geq(&self, other: &Self) -> bool {
-    //     const_for!((i in 0..N) {
-    //         let a = self.0[N - i - 1];
-    //         let b = other.0[N - i - 1];
-    //         if a < b {
-    //             return false;
-    //         } else if a > b {
-    //             return true;
-    //         }
-    //     });
-    //     true
-    // }
-
-    // TODO: Ideally this function should be const
-    fn const_geq(&self, other: &Self) -> bool {
+    fn geq(&self, other: &Self) -> bool {
         let mut i = 0;
         while i < N {
             let a = self.0[N - i - 1];
@@ -103,48 +99,34 @@ impl<const N: usize> BigInt<N> {
         true
     }
 
-    // TODO: Ideally this function should be const
     pub fn two_adic_valuation(mut self) -> u32 {
-        // TODO: Remove later
-        panic!();
-
         let mut two_adicity = 0;
         assert!(self.const_is_odd());
-        // Since `self` is odd, we can always subtract one
-        // without a borrow
-        self.0[0] -= 1;
+        self.0[0] = self.0[0] - 1;
         while self.const_is_even() {
-            self = self.const_shr();
+            panic!();
+            self = self.shr(); // Aeneas does not understand this expression
             two_adicity += 1;
         }
         two_adicity
     }
 
-    // TODO: Ideally this function should be const
     pub fn two_adic_coefficient(mut self) -> Self {
-        // TODO: Remove later
-        panic!();
-
         assert!(self.const_is_odd());
-        // Since `self` is odd, we can always subtract one
-        // without a borrow
-        self.0[0] -= 1;
+        self.0[0] = self.0[0] - 1;
         while self.const_is_even() {
-            self = self.const_shr();
+            panic!();
+            self = self.shr(); // Aeneas does not understand this expression
         }
         assert!(self.const_is_odd());
         self
     }
 
-    // TODO: Ideally this function should be const
     pub fn divide_by_2_round_down(mut self) -> Self {
-        // TODO: Remove this later
-        panic!();
-
         if self.const_is_odd() {
-            self.0[0] -= 1; // This expression crashes Aeneas
+            self.0[0] = self.0[0] - 1;
         }
-        self.const_shr()
+        self.shr()
     }
 
     pub const fn const_num_bits(self) -> u32 {
@@ -152,267 +134,222 @@ impl<const N: usize> BigInt<N> {
     }
 
     pub(crate) const fn const_sub_with_borrow(mut self, other: &Self) -> (Self, bool) {
-        // TODO: Remove this later
-        panic!();
-
         let mut borrow = 0;
-
-        crate::const_for!((i in 0..N) {
-            self.0[i] = sbb!(self.0[i], other.0[i], &mut borrow); // This expression crashes Aeneas
-        });
-
+        let mut i = 0;
+        while i < N {
+            self.0[i] = sbb!(self.0[i], other.0[i], &mut borrow);
+            i += 1;
+        }
         (self, borrow != 0)
     }
 
     pub(crate) const fn const_add_with_carry(mut self, other: &Self) -> (Self, bool) {
-        // TODO: Remove this later
-        panic!();
-
         let mut carry = 0;
-
-        crate::const_for!((i in 0..N) {
-            self.0[i] = adc!(self.0[i], other.0[i], &mut carry); // This expression crashes Aeneas
-        });
+        let mut i = 0;
+        while i < N {
+            self.0[i] = adc!(self.0[i], other.0[i], &mut carry);
+            i += 1;
+        }
 
         (self, carry != 0)
     }
 
     const fn const_mul2_with_carry(mut self) -> (Self, bool) {
-        // TODO: Remove this later
-        panic!();
-
         let mut last = 0;
-        crate::const_for!((i in 0..N) {
-            let a = self.0[i]; // This group of lines crashes Aeneas
+        let mut i = 0;
+        while i < N {
+            let a = self.0[i];
             let tmp = a >> 63;
-            self.0[i] <<= 1;
-            self.0[i] |= last;
+            self.0[i] = self.0[i] << 1;
+            self.0[i] = self.0[i] | last;
             last = tmp;
-        });
+        }
         (self, last != 0)
     }
 
     pub(crate) const fn const_is_zero(&self) -> bool {
-        // TODO: Remove this later
-        panic!();
-
         let mut is_zero = true;
-        crate::const_for!((i in 0..N) {
-            is_zero &= self.0[i] == 0; // This expression crashes Aeneas
-        });
+        let mut i = 0;
+        while i < N {
+            is_zero = is_zero && (self.0[i] == 0);
+            i += 1;
+        }
         is_zero
     }
 
-    // pub const fn montgomery_r(&self) -> Self {
-    //     let two_pow_n_times_64 = crate::const_helpers::RBuffer::<N>([0u64; N], 1);
-    //     const_modulo!(two_pow_n_times_64, self)
-    // }
+    pub const fn montgomery_r(&self) -> Self {
+        unimplemented!();
+    }
 
-    // pub const fn montgomery_r2(&self) -> Self {
-    //     let two_pow_n_times_64_square =
-    //         crate::const_helpers::R2Buffer::<N>([0u64; N], [0u64; N], 1);
-    //     const_modulo!(two_pow_n_times_64_square, self)
-    // }
+    pub const fn montgomery_r2(&self) -> Self {
+        unimplemented!();
+    }
 }
 
 impl<const N: usize> BigInteger for BigInt<N> {
-    // const NUM_LIMBS: usize = N;
-
     fn add_with_carry(&mut self, other: &Self) -> bool {
-        {
-            use arithmetic::adc_for_add_with_carry as adc;
-
-            let a = &mut self.0;
-            let b = &other.0;
-            let mut carry = 0;
-
-            if N >= 1 {
-                carry = adc(&mut a[0], b[0], carry);
-            }
-            if N >= 2 {
-                carry = adc(&mut a[1], b[1], carry);
-            }
-            if N >= 3 {
-                carry = adc(&mut a[2], b[2], carry);
-            }
-            if N >= 4 {
-                carry = adc(&mut a[3], b[3], carry);
-            }
-            if N >= 5 {
-                carry = adc(&mut a[4], b[4], carry);
-            }
-            if N >= 6 {
-                carry = adc(&mut a[5], b[5], carry);
-            }
-            if N >= 6 {
-                let mut i = 5;
-                while i < N {
-                    carry = adc(&mut a[i], b[i], carry);
-                    i += 1;
-                }
-            }
-            
-            carry != 0
-        }
-    }
-
-    #[inline]
-    fn sub_with_borrow(&mut self, other: &Self) -> bool {
-        use arithmetic::sbb_for_sub_with_borrow as sbb;
-
-        let a = &mut self.0;
-        let b = &other.0;
-        let mut borrow = 0u8;
-
-        if N >= 1 {
-            borrow = sbb(&mut a[0], b[0], borrow);
-        }
-        if N >= 2 {
-            borrow = sbb(&mut a[1], b[1], borrow);
-        }
-        if N >= 3 {
-            borrow = sbb(&mut a[2], b[2], borrow);
-        }
-        if N >= 4 {
-            borrow = sbb(&mut a[3], b[3], borrow);
-        }
-        if N >= 5 {
-            borrow = sbb(&mut a[4], b[4], borrow);
-        }
-        if N >= 6 {
-            borrow = sbb(&mut a[5], b[5], borrow);
-        }
-        let mut i = 6;
+        let mut carry = 0;
+        let mut i = 0;
         while i < N {
-            borrow = sbb(&mut a[i], b[i], borrow);
+            carry = arithmetic::adc_for_add_with_carry(&mut self.0[i], other.0[i], carry);
             i += 1;
         }
-        
+        carry != 0
+    }
+
+    fn sub_with_borrow(&mut self, other: &Self) -> bool {
+        let mut borrow = 0;
+        let mut i = 0;
+        while i < N {
+            borrow = arithmetic::sbb_for_sub_with_borrow(&mut self.0[i], other.0[i], borrow);
+            i += 1;
+        }
         borrow != 0
     }
 
-    #[inline]
-    #[allow(unused)]
     fn mul2(&mut self) -> bool {
         let mut last = 0;
         let mut i = 0;
         while i < N {
-                let a = &mut self.0[i];
-                let tmp = *a >> 63;
-                *a <<= 1;
-                *a |= last;
-                last = tmp;
-                i += 1;
+            let a = &mut self.0[i];
+            let tmp = *a >> 63;
+            *a <<= 1;
+            *a |= last;
+            last = tmp;
+            i += 1;
         }
         last != 0
     }
 
     fn muln(&mut self, mut n: u32) {
-        panic!();
-
         if n >= (64 * N) as u32 {
-            // *self = Self::from(0u64);
+            *self = Self::zero();
             return;
         }
 
-        while n >= 64 {
+        while n >= 64 { // Aeneas does not understand this loop
+            unimplemented!();
             let mut t = 0;
-            for i in 0..N {
-                core::mem::swap(&mut t, &mut self.0[i]);
+            let mut i = 0;
+            while i < N {
+                let tmp = t;
+                t = self.0[i];
+                self.0[i] = tmp;
+                i += 1;
             }
             n -= 64;
         }
 
-        if n > 0 {
+        if n > 0 { // Aeneas does not understand this
+            unimplemented!();
             let mut t = 0;
-            #[allow(unused)]
-            for i in 0..N {
+            let mut i = 0;
+            while i < N {
                 let a = &mut self.0[i];
                 let t2 = *a >> (64 - n);
                 *a <<= n;
+                *a |= t;
+                t = t2;
+                i += 1;
+            }
+        }
+    }
+
+    // fn mul(&self, other: &Self) -> (Self, Self) {
+    //     if self.const_is_zero() || other.const_is_zero() {
+    //         return (Self::zero(), Self::zero());
+    //     }
+    //     unimplemented!() // Must complete the rest of this code
+    // }
+
+    fn mul_low(&self, other: &Self) -> Self {
+        if self.const_is_zero() || other.const_is_zero() {
+            return Self::zero();
+        }
+        unimplemented!() // Must complete the rest of this code
+    }
+
+    fn mul_high(&self, other: &Self) -> Self {
+        unimplemented!();
+        // self.mul(other).1
+    }
+
+    fn div2(&mut self) {
+        let mut t = 0;
+        let mut i = N - 1;
+        while i >= 0 {
+            let t2 = self.0[i] << 63;
+            self.0[i] = self.0[i] >> 1;
+            self.0[i] = self.0[i] | t;
+            i -= 1;
+        }
+    }
+
+    fn divn(&mut self, mut n: u32) {
+        if n >= (64 * N) as u32 {
+            *self = Self::zero();
+            return;
+        }
+
+        while n >= 64 { // Aeneas does not understand this
+            unimplemented!();
+            let mut t = 0;
+            let mut i = 0;
+            while i < N {
+                let tmp = t;
+                t = self.0[N - i - 1];
+                self.0[N - i - 1] = tmp;
+                i += 1;
+            }
+            n -= 64;
+        }
+
+        if n > 0 { // Aeneas does not understand this
+            unimplemented!();
+            let mut t = 0;
+            let mut i = 0;
+            while i < N {
+                let a = &mut self.0[N - i - 1];
+                let t2 = *a << (64 - n);
+                *a >>= n;
                 *a |= t;
                 t = t2;
             }
         }
     }
 
-    fn div2(&mut self) {
-        panic!();
-
-        // Aeneas gives error
-        let mut t = 0;
-        for i in 0..N {
-            let a = &mut self.0[N - i - 1];
-            let t2 = *a << 63;
-            *a >>= 1;
-            *a |= t;
-            t = t2;
-        }
-    }
-
-    // fn divn(&mut self, mut n: u32) {
-    //     if n >= (64 * N) as u32 {
-    //         *self = Self::from(0u64);
-    //         return;
-    //     }
-
-    //     while n >= 64 {
-    //         let mut t = 0;
-    //         for i in 0..N {
-    //             core::mem::swap(&mut t, &mut self.0[N - i - 1]);
-    //         }
-    //         n -= 64;
-    //     }
-
-    //     if n > 0 {
-    //         let mut t = 0;
-    //         #[allow(unused)]
-    //         for i in 0..N {
-    //             let a = &mut self.0[N - i - 1];
-    //             let t2 = *a << (64 - n);
-    //             *a >>= n;
-    //             *a |= t;
-    //             t = t2;
-    //         }
-    //     }
-    // }
-
-    #[inline]
     fn is_odd(&self) -> bool {
         self.0[0] & 1 == 1
     }
 
-    #[inline]
     fn is_even(&self) -> bool {
         !self.is_odd()
     }
 
-    #[inline]
     fn is_zero(&self) -> bool {
-        let mut ret = true;
+        let mut is_zero = true;
         let mut i = 0;
         while i < N {
-            ret = ret && (self.0[i] != 0);
+            is_zero = is_zero && (self.0[i] == 0);
             i += 1;
+        }
+        is_zero
+    }
+
+    fn num_bits(&self) -> u32 {
+        let mut ret = N as u32 * 64;
+        let mut i = N - 1;
+        while i >= 0 {
+            let leading = i.leading_zeros();
+            ret -= leading;
+            if leading != 64 {
+                break;
+            }
+            i -= 1;
         }
         ret
     }
 
-    // #[inline]
-    // fn num_bits(&self) -> u32 {
-    //     let mut ret = N as u32 * 64;
-    //     for i in self.0.iter().rev() {
-    //         let leading = i.leading_zeros();
-    //         ret -= leading;
-    //         if leading != 64 {
-    //             break;
-    //         }
-    //     }
-
-    //     ret
-    // }
-
-    #[inline]
     fn get_bit(&self, i: usize) -> bool {
         if i >= 64 * N {
             false
@@ -423,81 +360,65 @@ impl<const N: usize> BigInteger for BigInt<N> {
         }
     }
 
-    // #[inline]
-    // fn from_bits_be(bits: &[bool]) -> Self {
-    //     let mut res = Self::default();
-    //     let mut acc: u64 = 0;
+    fn from_bits_be(bits: &[bool]) -> Self {
+        let mut bits = bits.to_vec();
+        bits.reverse();
+        Self::from_bits_le(&bits)
+    }
 
-    //     let mut bits = bits.to_vec();
-    //     bits.reverse();
-    //     for (i, bits64) in bits.chunks(64).enumerate() {
-    //         for bit in bits64.iter().rev() {
-    //             acc <<= 1;
-    //             acc += *bit as u64;
-    //         }
-    //         res.0[i] = acc;
-    //         acc = 0;
-    //     }
-    //     res
-    // }
+    fn from_bits_le(bits: &[bool]) -> Self {
+        let mut res = Self::zero();
+        let mut i = 0;
+        while i < N { // For some reason this loop breaks aeneas
+            unimplemented!();
+            let mut j = 0;
+            while j < 64 {
+                let tmp = (bits[64 * i + j] as u64) << i;
+                res.0[i] = res.0[i] | tmp;
+                j += 1;
+            }
+            i += 1;
+        }
+        res
+    }
 
-    // fn from_bits_le(bits: &[bool]) -> Self {
-    //     let mut res = Self::zero();
-    //     for (bits64, res_i) in bits.chunks(64).zip(&mut res.0) {
-    //         for (i, bit) in bits64.iter().enumerate() {
-    //             *res_i |= (*bit as u64) << i;
-    //         }
-    //     }
-    //     res
-    // }
+    fn to_bytes_be(&self) -> Vec<u8> {
+        let mut le_bytes = self.to_bytes_le();
+        le_bytes.reverse();
+        le_bytes
+    }
 
-    // #[inline]
-    // fn to_bytes_be(&self) -> Vec<u8> {
-    //     let mut le_bytes = self.to_bytes_le();
-    //     le_bytes.reverse();
-    //     le_bytes
-    // }
-
-    // #[inline]
-    // fn to_bytes_le(&self) -> Vec<u8> {
-    //     let array_map = self.0.iter().map(|limb| limb.to_le_bytes());
-    //     let mut res = Vec::with_capacity(N * 8);
-    //     for limb in array_map {
-    //         res.extend_from_slice(&limb);
-    //     }
-    //     res
-    // }
+    fn to_bytes_le(&self) -> Vec<u8> {
+        let mut i = 0;
+        let mut res = Vec::with_capacity(N * 8);
+        while i < N { // Fails because of `extend_from_slice` method
+            let limb = self.0[i].to_le_bytes();
+            unimplemented!();
+            res.extend_from_slice(&limb);
+            i += 1;
+        }
+        res
+    }
 }
 
 pub trait BigInteger
 {
-    // const NUM_LIMBS: usize;
-
     fn add_with_carry(&mut self, other: &Self) -> bool;
     fn sub_with_borrow(&mut self, other: &Self) -> bool;
     fn mul2(&mut self) -> bool;
     fn muln(&mut self, amt: u32);
+    // fn mul(&self, other: &Self) -> (Self, Self);
+    fn mul_low(&self, other: &Self) -> Self;
+    fn mul_high(&self, other: &Self) -> Self;
     fn div2(&mut self);
-    // fn divn(&mut self, amt: u32);
+    fn divn(&mut self, amt: u32);
     fn is_odd(&self) -> bool;
     fn is_even(&self) -> bool;
     fn is_zero(&self) -> bool;
-    // fn num_bits(&self) -> u32;
+    fn num_bits(&self) -> u32;
     fn get_bit(&self, i: usize) -> bool;
-    // fn from_bits_be(bits: &[bool]) -> Self;
-    // fn from_bits_le(bits: &[bool]) -> Self;
-    // fn to_bytes_be(&self) -> Vec<u8>;
-    // fn to_bytes_le(&self) -> Vec<u8>;
-    // fn find_wnaf(&self, w: usize) -> Option<Vec<i64>>;
-}
-
-#[macro_export]
-macro_rules! const_for {
-    (($i:ident in $start:tt..$end:tt)  $code:expr ) => {{
-        let mut $i = $start;
-        while $i < $end {
-            $code
-            $i += 1;
-        }
-    }};
+    fn from_bits_be(bits: &[bool]) -> Self;
+    fn from_bits_le(bits: &[bool]) -> Self;
+    fn to_bytes_be(&self) -> Vec<u8>;
+    fn to_bytes_le(&self) -> Vec<u8>;
 }
