@@ -255,9 +255,9 @@ impl<const N: usize> BigInteger for BigInt<N> {
         }
     }
 
-    fn mul(&self, other: &Self) -> Self {
+    fn mul(&self, other: &Self) -> (Self, Self) {
         if self.const_is_zero() || other.const_is_zero() {
-            return Self::zero();
+            return (Self::zero(), Self::zero());
         }
 
         let mut b0 = Self::zero();
@@ -280,7 +280,7 @@ impl<const N: usize> BigInteger for BigInt<N> {
             i += 1;
         }
 
-        unimplemented!();
+        (b0, b1)
     }
 
     fn mul_low(&self, other: &Self) -> Self {
@@ -422,13 +422,14 @@ impl<const N: usize> BigInteger for BigInt<N> {
     }
 }
 
-pub trait BigInteger
+pub trait BigInteger:
+    Sized
 {
     fn add_with_carry(&mut self, other: &Self) -> bool;
     fn sub_with_borrow(&mut self, other: &Self) -> bool;
     fn mul2(&mut self) -> bool;
     fn muln(&mut self, amt: u32);
-    fn mul(&self, other: &Self) -> Self; // Should be a tuple here
+    fn mul(&self, other: &Self) -> (Self, Self);
     fn mul_low(&self, other: &Self) -> Self;
     fn mul_high(&self, other: &Self) -> Self;
     fn div2(&mut self);
