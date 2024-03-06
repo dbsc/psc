@@ -255,12 +255,33 @@ impl<const N: usize> BigInteger for BigInt<N> {
         }
     }
 
-    // fn mul(&self, other: &Self) -> (Self, Self) {
-    //     if self.const_is_zero() || other.const_is_zero() {
-    //         return (Self::zero(), Self::zero());
-    //     }
-    //     unimplemented!() // Must complete the rest of this code
-    // }
+    fn mul(&self, other: &Self) -> Self {
+        if self.const_is_zero() || other.const_is_zero() {
+            return Self::zero();
+        }
+
+        let mut b0 = Self::zero();
+        let mut b1 = Self::zero();
+        let mut carry = 0;
+
+        let mut i = 0;
+        while i < N { // Double loop compilation error
+            unimplemented!();
+            let mut j = 0;
+            while j < N {
+                let index = i + j;
+                if index < N {
+                    b0.0[index] = mac_with_carry!(b0.0[index], self.0[i], other.0[j], &mut carry);
+                } else {
+                    b1.0[index] = mac_with_carry!(b1.0[index], self.0[i], other.0[j], &mut carry);
+                }
+                j += 1;
+            }
+            i += 1;
+        }
+
+        unimplemented!();
+    }
 
     fn mul_low(&self, other: &Self) -> Self {
         if self.const_is_zero() || other.const_is_zero() {
@@ -407,7 +428,7 @@ pub trait BigInteger
     fn sub_with_borrow(&mut self, other: &Self) -> bool;
     fn mul2(&mut self) -> bool;
     fn muln(&mut self, amt: u32);
-    // fn mul(&self, other: &Self) -> (Self, Self);
+    fn mul(&self, other: &Self) -> Self; // Should be a tuple here
     fn mul_low(&self, other: &Self) -> Self;
     fn mul_high(&self, other: &Self) -> Self;
     fn div2(&mut self);
