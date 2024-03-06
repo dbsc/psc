@@ -119,11 +119,11 @@ by {
 
 lemma BigInt.slice_eq (l : List U64) (i : Int) (N : Int)
   (h0 : 0 ≤ i) (h1 : i < N) (h2 : N ≤ l.len) :
-  BigInt.valImpl (l.slice i N) = ((2 ^ 64) ^ i.toNat) * BigInt.valImpl (l.slice (i + 1) N) + (l.index i) := by sorry
+  BigInt.valImpl (l.slice i N) = (2 ^ 64) * BigInt.valImpl (l.slice (i + 1) N) + (l.index i) := by sorry
 
 lemma BigInt.mod_value_eq (n : Int) : BigInt.mod_value n = (2 ^ 64) ^ n.toNat := by sorry
 
-lemma BigInt.mod_value_add_one (n : Int) : (2 ^ 64) * BigInt.mod_value n = BigInt.mod_value (n + 1) := by sorry
+lemma BigInt.mod_value_add_one (n : Int) : BigInt.mod_value n * (2 ^ 64) = BigInt.mod_value (n + 1) := by sorry
 
 lemma add_with_carry_loop_correct :
   ∀ (N : Usize) (self : Array U64 N) (other : Array U64 N) (carry : U8) (i : Usize) (h : i ≤ N),
@@ -180,15 +180,39 @@ lemma add_with_carry_loop_correct :
       rw [hOldSlice]
 
       rw [hw1]
-      rw [hi3a]
-      rw [hi2]
-      rw [hi3d]
+      -- rw [hi3a]
+      -- rw [hi2]
+      -- rw [hi3d]
       simp only [Scalar.ofInt_val_eq]
+      simp only [Int.mul_add]
+      rw [←Int.mul_assoc]
+      rw [BigInt.mod_value_add_one]
+      rw [Int.add_comm]
+      rw [Int.add_assoc]
+      rw [Int.add_assoc]
+      rw [Int.emod_add_cancel_left]
+      rw [←BigInt.mod_value_add_one]
+      rw [←BigInt.mod_value_eq]
+      rw [Int.mul_assoc]
+      have htmp : (hi3.val - ((self.val).index i.val).val) * BigInt.mod_value i.val = BigInt.mod_value i.val * (hi3.val - ((self.val).index i.val).val) := by simp [Int.mul_comm]
+      rw [htmp]
+      rw [←Int.mul_add]
+      rw [←Int.mul_add]
+      rw [hi3d]
+      rw [hi3a]
+      rw [←add_sub_assoc]
+      rw [Int.ediv_add_emod]
+      have htmp1 : i1.val + i2.val + carry.val = i2.val + carry.val + i1.val := by scalar_tac
+      rw [htmp1]
       rw [hi1d]
+      rw [add_sub_assoc]
+      simp only [sub_self, add_zero]
+
       rw [hi2]
-      sorry
-      sorry
-      sorry
+      --------------------------------------------
+
+      scalar_tac
+      scalar_tac
 termination_by (N.val - i.val).toNat
 decreasing_by
   simp_wf
