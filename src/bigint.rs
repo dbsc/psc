@@ -104,8 +104,7 @@ impl<const N: usize> BigInt<N> {
         assert!(self.const_is_odd());
         self.0[0] = self.0[0] - 1;
         while self.const_is_even() {
-            unimplemented!();
-            self = self.shr(); // Aeneas does not understand this expression
+            self = self.shr();
             two_adicity += 1;
         }
         two_adicity
@@ -115,8 +114,7 @@ impl<const N: usize> BigInt<N> {
         assert!(self.const_is_odd());
         self.0[0] = self.0[0] - 1;
         while self.const_is_even() {
-            unimplemented!();
-            self = self.shr(); // Aeneas does not understand this expression
+            self = self.shr();
         }
         assert!(self.const_is_odd());
         self
