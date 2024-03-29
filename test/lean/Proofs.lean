@@ -16,7 +16,17 @@ def BigInt.valImpl (l : List U64) : Int :=
   | a::b => a.val + (valImpl b) * (2 ^ 64)
   | [] => 0
 
-lemma valImpl_ge_zero (l : List U64) : BigInt.valImpl l ≥ 0 := sorry
+lemma valImpl_ge_zero (l : List U64) : BigInt.valImpl l ≥ 0 := by
+  unfold BigInt.valImpl
+  match l with
+  | a::b => {
+    have ha : 0 ≤ a.val := by scalar_tac
+    have hb : 0 ≤ BigInt.valImpl b * 2 ^ 64 := by simp[valImpl_ge_zero]
+    have hc := Int.add_le_add ha hb
+    simp at hc
+    simp [*]
+  }
+  | [] => simp
 
 @[simp]
 lemma tmp : Inhabited U64 := by
@@ -76,7 +86,51 @@ def BigInt.mod_value (n : Int) : Int := (U64.max + 1) ^ (Int.toNat n)
 
 def BigInt.max_value (n : Int) : Int := BigInt.mod_value n - 1
 
-lemma valImpl_lt_mod (N : Usize) (bn : Array U64 N) : BigInt.valImpl bn.val < BigInt.mod_value N.val := by sorry
+lemma BigInt.mod_value_add_one (n : Int) (hn : 0 ≤ n) : BigInt.mod_value n * (2 ^ 64) = BigInt.mod_value (n + 1) := by
+  rw [BigInt.mod_value]
+  rw [BigInt.mod_value]
+  rw [U64.max]
+  simp
+  rw [mul_comm]
+  rw [←pow_succ]
+  simp []
+  have hf := Int.toNat_add_nat hn 1
+  rw [←hf]
+  simp
+
+lemma valImpl_lt_mod (l : List U64) : BigInt.valImpl l < BigInt.mod_value l.len := by
+  unfold BigInt.valImpl
+  match h : l with
+  | a::b => {
+    simp only [List.len_cons, gt_iff_lt]
+    have ha := valImpl_lt_mod b
+    have hb : a.val < 2 ^ 64 := by scalar_tac
+    have hc := Int.le_sub_one_of_lt ha
+    have hd : 1 + b.len = b.len + 1 := by scalar_tac
+    have hf : (0 : Int) ≤ 2 ^ 64 := by simp 
+    have hg := Int.mul_le_mul_of_nonneg_right hc hf
+    simp only [Int.sub_mul] at hg
+    simp only [one_mul] at hg
+    have hh := add_lt_add_of_le_of_lt hg hb
+    simp only [sub_add_cancel] at hh
+    rw [Int.add_comm] at hh
+    rw [hd]
+    rw [←BigInt.mod_value_add_one]
+    simp only [hh]
+    scalar_tac
+  }
+  | [] => {
+    simp
+    unfold BigInt.mod_value
+    simp
+  }
+
+
+lemma BigInt.val_lt_mod (N : Usize) (bn : Array U64 N) : BigInt.valImpl bn.val < BigInt.mod_value N.val := by
+  have hi := valImpl_lt_mod bn.val
+  have he := bn.property
+  simp [*, List.len_eq_length] at hi
+  simp [*]
 
 theorem adc_for_add_with_carry_spec (a : U64) (b : U64) (carry : U8) :
   ∃ new_carry r, adc_for_add_with_carry a b carry = .ret (new_carry, r) ∧ 
@@ -114,12 +168,50 @@ by {
 
 lemma BigInt.slice_eq (l : List U64) (i : Int) (N : Int)
   (h0 : 0 ≤ i) (h1 : i < N) (h2 : N ≤ l.len) :
-  BigInt.valImpl (l.slice i N) = (2 ^ 64) * BigInt.valImpl (l.slice (i + 1) N) + (l.index i) := by sorry
+  BigInt.valImpl (l.slice i N) = (2 ^ 64) * BigInt.valImpl (l.slice (i + 1) N) + (l.index i) := by
+    match l with
+    | h::tl => {
+      if hi : i = 0
+      then {
+        rw [hi]
+        simp only [zero_add, ne_eq, zero_ne_one, not_false_eq_true, neq_imp,
+          List.slice_nzero_cons, sub_self, List.index_zero_cons]
+        rw [List.slice]
+        simp only [sub_zero, List.idrop_zero]
+        rw [List.itake]
+        have h3 := lt_of_le_of_lt h0 h1
+        have h4 := ne_of_lt h3
+        simp only [h4, not_false_eq_true, neq_imp, ↓reduceIte]
+        rw [valImpl]
+        rw [add_comm]
+        rw [mul_comm]
+        rw [List.slice]
+        simp
+      }
+      else {
+        have hi1 : i + 1 ≠ 0 := by scalar_tac
+        simp only [ne_eq, not_false_eq_true, List.slice_nzero_cons, List.index_nzero_cons, hi, hi1]
+        rw [BigInt.slice_eq]
+        simp
+        scalar_tac
+        scalar_tac
+        simp [*] at h2
+        rw [add_comm] at h2
+        simp [*]
+      }
+    }
+    | [] => {
+      simp at h2
+      have h3 := lt_of_le_of_lt h0 h1
+      have h4 := not_le_of_lt h3
+      simp [h2] at h4
+    }
 
-lemma BigInt.mod_value_eq (n : Int) : BigInt.mod_value n = (2 ^ 64) ^ n.toNat := by sorry
-
-lemma BigInt.mod_value_add_one (n : Int) : BigInt.mod_value n * (2 ^ 64) = BigInt.mod_value (n + 1) := by sorry
-
+lemma BigInt.mod_value_eq (n : Int) : BigInt.mod_value n = (2 ^ 64) ^ n.toNat := by
+  rw [BigInt.mod_value]
+  rw [U64.max]
+  simp
+  
 lemma add_with_carry_loop_correct :
   ∀ (N : Usize) (self : Array U64 N) (other : Array U64 N) (carry : U8) (i : Usize) (h : i ≤ N),
   ∃ b v, arithmetics.BigInt.add_with_carry_loop N self other carry i = .ret (b, v) ∧
@@ -139,7 +231,7 @@ lemma add_with_carry_loop_correct :
       simp only [hieqN, Scalar.lt_equiv, lt_self_iff_false, ↓reduceIte, ret.injEq, Prod.mk.injEq,
         Int.add_mul_emod_self_left]
       exists (carry != 0#u8), self
-      have modh := Int.emod_eq_of_lt (valImpl_ge_zero self.val) (valImpl_lt_mod N self)
+      have modh := Int.emod_eq_of_lt (valImpl_ge_zero self.val) (BigInt.val_lt_mod N self)
       simp only [and_self, true_and]
       simp [*]
     else
@@ -206,6 +298,8 @@ lemma add_with_carry_loop_correct :
       rw [hi2]
       --------------------------------------------
 
+      scalar_tac
+      scalar_tac
       scalar_tac
       scalar_tac
 termination_by (N.val - i.val).toNat
