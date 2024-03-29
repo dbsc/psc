@@ -84,11 +84,6 @@ theorem adc_for_add_with_carry_spec (a : U64) (b : U64) (carry : U8) :
   r = (a.val + b.val + carry.val) % 2 ^ 64 := by sorry
 
 
-lemma add_with_carry_overflow [Inhabited U64] : 
-  ∀ (N : Usize) (self : arithmetics.BigInt N) (other : arithmetics.BigInt N),
-  ∃ b val, arithmetics.BigInt.add_with_carry N self other = .ret (b, val) ∧
-  ¬b ↔ self.val + other.val ≤ BigInt.max_value N := sorry
-
 lemma BigInt.ha_0_val (N: Usize) (bi : Array U64 N) : N = 0#usize → BigInt.valImpl bi.val = 0 := 
 by {
       unfold BigInt.valImpl;
@@ -238,6 +233,81 @@ lemma full_slice (l : List α) (N: Int) (h : N = l.len): List.slice 0 N l = l :=
   unfold List.slice
   simp only [sub_zero, List.idrop_zero]
   simp only [full_itake, h]
+
+lemma inductive_overflow:
+∀ (N:Usize) (self : arithmetics.BigInt N) (other : arithmetics.BigInt N)(b1:Bool)(val1:arithmetics.BigInt (N))
+(h1:N ≥ 1#usize )(h2:arithmetics.BigInt.add_with_carry N self other = .ret (b1, val1)), (∃ (M:Usize) (self_reduit : arithmetics.BigInt (M)) (other_reduit : arithmetics.BigInt (M)) 
+(self_val:U64) (other_val:U64)  (val2:arithmetics.BigInt (M))
+ (b2:Bool), N-1#usize=ret M ∧  self.num.val=self_val::self_reduit.num.val ∧ other.num.val=other_val::other_reduit.num.val
+∧arithmetics.BigInt.add_with_carry M self_reduit other_reduit = .ret (b2, val2) ∧ 
+((b1=true) ↔ (self_val+other_val ≥ U64.max ∨ (self_val+other_val = U64.max-1 ∧ b2)))):=
+sorry
+
+lemma inductive_addition:
+∀ (N:Usize) (self : arithmetics.BigInt N) (other : arithmetics.BigInt N)(M:Usize)
+(self_val:U64)(other_val:U64)(h1:N ≥ 1#usize )(h2:N-1#usize=ret M)
+(h3:∃self_reduit : arithmetics.BigInt (M),self.num.val=self_val::self_reduit.num.val)
+(h4:∃other_reduit : arithmetics.BigInt (M),other.num.val=other_val::other_reduit.num.val),
+self_val+other_val≤U64.max-2 → self.val+other.val ≤ BigInt.max_value N:=
+by sorry
+
+lemma add_with_carry_overflow [Inhabited U64] : 
+  ∀ (N : Usize) (self : arithmetics.BigInt N) (other : arithmetics.BigInt N),
+  ∃ b val, arithmetics.BigInt.add_with_carry N self other = .ret (b, val) ∧
+  (¬b ↔ self.val + other.val ≤ BigInt.max_value N) :=
+by
+  intro N₁
+  intro s₁ o₁
+  simp only [arithmetics.BigInt.add_with_carry]
+  
+  apply Iff.intro
+  intro h₀
+  if hN: N₁=0#usize then
+    sorry
+  else
+    have hGN:N₁ ≥ 1#usize:=by sorry
+    rcases h₀ with ⟨b₀,v₀,hκ1,hκ2⟩ 
+    have h:=inductive_overflow N₁ s₁ o₁ b₀ v₀ hGN hκ1
+    rcases h with ⟨M, self_reduit, other_reduit, self_val, other_val, val2, b2, h1, h2, h3, h4,h5⟩
+    have hnb:self_val + other_val < U64.max ∧ (¬(self_val + other_val = U64.max - 1) ∨ ¬b2 = true):=
+      by 
+       contrapose! hκ2 
+       if hr:self_val + other_val < U64.max then
+         have him:self_val.val + other_val.val = U64.max - 1 ∧ b2 = true:=
+           by exact hκ2 hr
+         have him2: self_val.val + other_val.val ≥ U64.max ∨ self_val.val + other_val.val = U64.max - 1 ∧ b2 = true:=
+           by exact Or.inr him
+         exact Iff.mpr h5 him2
+       else
+         have hnr: self_val + other_val ≥ U64.max:=
+          by 
+            rw[not_lt] at hr
+            exact hr
+         have him3:self_val.val + other_val.val ≥ U64.max ∨ self_val.val + other_val.val = U64.max - 1 ∧ b2 = true:=
+          by exact Or.inl hnr
+         exact Iff.mpr h5 him3
+    simp
+    let ⟨hnb1,hnb2⟩ := hnb
+    match hnb2 with
+    |Or.inl hl=>
+      have hn: self_val.val + other_val.val ≤ U64.max - 2:=by sorry
+      exact inductive_addition N₁ s₁ o₁ M self_val other_val hGN h1 ⟨self_reduit,h2⟩ ⟨other_reduit,h3⟩ hn
+    |Or.inr hr=> sorry
+  intro h₂
+  rw [BigInt.add_with_carry]
+  simp only [Usize.ofInt_val_eq]
+  progress with add_with_carry_loop_correct as ⟨ i, hi, hid ⟩
+  simp only [Scalar.le_equiv, Scalar.ofInt_val_eq, le_refl, ↓reduceIte]
+  .scalar_tac
+  
+  exists i, { num := hi }
+  simp only [true_and] 
+  unfold BigInt.mod_value at hid
+  simp only [Scalar.ofInt_val_eq, Int.toNat_zero, pow_zero, one_mul] at hid
+  have other_full_slice : List.slice 0 N₁.val o₁.num.val = o₁.num.val := by simp only [BigInt.len_spec, full_slice]
+  simp only [other_full_slice] at hid 
+  simp [*]
+  sorry
 
 
 lemma add_with_carry_correct :
