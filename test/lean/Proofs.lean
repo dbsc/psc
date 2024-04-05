@@ -345,6 +345,24 @@ lemma inductive_addition:
 self_val+other_val≤U64.max-2 → self.val+other.val ≤ BigInt.max_value N:=
 by sorry
 
+def toInt : U8 →  ℤ
+| ⟨val, _,_⟩ => val
+
+lemma add_with_carry_loop_overflow_correct
+  (N : Usize) (self : Array U64 N) (other : Array U64 N) (carry : U8) (i : Usize)
+  (h : i ≤ N) (hc : toInt carry ≤ 1) :
+  ∃ b v, arithmetics.BigInt.add_with_carry_loop N self other carry i = .ret (b, v) ∧
+  (b ↔ BigInt.valImpl self.val + BigInt.valImpl other.val + carry.val  > BigInt.max_value N) := by
+  sorry
+
+def bool_to_int (b:Bool) := if b then 0 else 1
+
+lemma add_with_carry_spec (N : Usize) (self : arithmetics.BigInt N) (other : arithmetics.BigInt N) :
+  ∃ b v, arithmetics.BigInt.add_with_carry N self other = .ret (b, v) ∧
+  (bool_to_int b) * (BigInt.mod_value N.val) + v.val = self.val + other.val
+  := by
+  sorry
+
 lemma add_with_carry_overflow [Inhabited U64] : 
   ∀ (N : Usize) (self : arithmetics.BigInt N) (other : arithmetics.BigInt N),
   ∃ b val, arithmetics.BigInt.add_with_carry N self other = .ret (b, val) ∧
@@ -353,56 +371,25 @@ by
   intro N₁
   intro s₁ o₁
   simp only [arithmetics.BigInt.add_with_carry]
-  
+  progress with add_with_carry_loop_overflow_correct as ⟨ i, hi, hid ⟩
+  . scalar_tac
+  rw [toInt]
+  simp
+  exists i,{num:=hi}
+  simp
   apply Iff.intro
   intro h₀
-  if hN: N₁=0#usize then
-    sorry
-  else
-    have hGN:N₁ ≥ 1#usize:=by sorry
-    rcases h₀ with ⟨b₀,v₀,hκ1,hκ2⟩ 
-    have h:=inductive_overflow N₁ s₁ o₁ b₀ v₀ hGN hκ1
-    rcases h with ⟨M, self_reduit, other_reduit, self_val, other_val, val2, b2, h1, h2, h3, h4,h5⟩
-    have hnb:self_val + other_val < U64.max ∧ (¬(self_val + other_val = U64.max - 1) ∨ ¬b2 = true):=
-      by 
-       contrapose! hκ2 
-       if hr:self_val + other_val < U64.max then
-         have him:self_val.val + other_val.val = U64.max - 1 ∧ b2 = true:=
-           by exact hκ2 hr
-         have him2: self_val.val + other_val.val ≥ U64.max ∨ self_val.val + other_val.val = U64.max - 1 ∧ b2 = true:=
-           by exact Or.inr him
-         exact Iff.mpr h5 him2
-       else
-         have hnr: self_val + other_val ≥ U64.max:=
-          by 
-            rw[not_lt] at hr
-            exact hr
-         have him3:self_val.val + other_val.val ≥ U64.max ∨ self_val.val + other_val.val = U64.max - 1 ∧ b2 = true:=
-          by exact Or.inl hnr
-         exact Iff.mpr h5 him3
-    simp
-    let ⟨hnb1,hnb2⟩ := hnb
-    match hnb2 with
-    |Or.inl hl=>
-      have hn: self_val.val + other_val.val ≤ U64.max - 2:=by sorry
-      exact inductive_addition N₁ s₁ o₁ M self_val other_val hGN h1 ⟨self_reduit,h2⟩ ⟨other_reduit,h3⟩ hn
-    |Or.inr hr=> sorry
-  intro h₂
-  rw [BigInt.add_with_carry]
-  simp only [Usize.ofInt_val_eq]
-  progress with add_with_carry_loop_correct as ⟨ i, hi, hid ⟩
-  simp only [Scalar.le_equiv, Scalar.ofInt_val_eq, le_refl, ↓reduceIte]
-  .scalar_tac
-  
-  exists i, { num := hi }
-  simp only [true_and] 
-  unfold BigInt.mod_value at hid
-  simp only [Scalar.ofInt_val_eq, Int.toNat_zero, pow_zero, one_mul] at hid
-  have other_full_slice : List.slice 0 N₁.val o₁.num.val = o₁.num.val := by simp only [BigInt.len_spec, full_slice]
-  simp only [other_full_slice] at hid 
-  simp [*]
-  sorry
-
+  rw [h₀] at hid
+  simp at hid
+  rw [BigInt.val]
+  exact hid
+  intro h₁
+  simp [BigInt.val] at h₁
+  contrapose! h₁
+  simp at h₁
+  rw [h₁] at hid
+  simp at hid
+  exact hid
 
 lemma add_with_carry_correct :
   ∀ (N : Usize) (self : arithmetics.BigInt N) (other : arithmetics.BigInt N),
