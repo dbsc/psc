@@ -1,3 +1,5 @@
+// mod tests;
+
 // use crate::{
 //     bits::{BitIteratorBE, BitIteratorLE},
 //     const_for, UniformRand,
@@ -10,7 +12,7 @@
 // use ark_std::{
 //     borrow::Borrow,
 //     // convert::TryFrom,
-//     fmt::{Debug, Display, UpperHex},
+//     // fmt::{Debug, Display, UpperHex},
 //     io::{Read, Write},
 //     ops::{
 //         BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not, Shl, ShlAssign, Shr,
@@ -24,7 +26,10 @@
 //     vec::*,
 // };
 // use num_bigint::BigUint;
-use zeroize::Zeroize;
+// use zeroize::Zeroize;
+// use std::fmt::Debug;
+// use ark_std::{UniformRand};
+use std::ops::{Index, IndexMut};
 
 #[macro_use]
 pub mod arithmetic;
@@ -38,6 +43,58 @@ impl<const N: usize> Default for BigInt<N> {
         Self([0u64; N])
     }
 }
+
+#[derive(Copy, Clone)]
+#[repr(C, align(8))]
+pub(super) struct MulBuffer<const N: usize> {
+    pub(super) b0: [u64; N],
+    pub(super) b1: [u64; N],
+}
+
+impl<const N: usize> MulBuffer<N> {
+    const fn new(b0: [u64; N], b1: [u64; N]) -> Self {
+        Self { b0, b1 }
+    }
+
+    pub(super) const fn zeroed() -> Self {
+        let b = [0u64; N];
+        Self::new(b, b)
+    }
+
+    #[inline(always)]
+    pub(super) const fn get(&self, index: usize) -> &u64 {
+        if index < N {
+            &self.b0[index]
+        } else {
+            &self.b1[index - N]
+        }
+    }
+
+    #[inline(always)]
+    pub(super) fn get_mut(&mut self, index: usize) -> &mut u64 {
+        if index < N {
+            &mut self.b0[index]
+        } else {
+            &mut self.b1[index - N]
+        }
+    }
+}
+
+impl<const N: usize> Index<usize> for MulBuffer<N> {
+    type Output = u64;
+    #[inline(always)]
+    fn index(&self, index: usize) -> &Self::Output {
+        self.get(index)
+    }
+}
+
+impl<const N: usize> IndexMut<usize> for MulBuffer<N> {
+    #[inline(always)]
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        self.get_mut(index)
+    }
+}
+
 
 // impl<const N: usize> CanonicalSerialize for BigInt<N> {
 //     fn serialize_with_mode<W: Write>(
@@ -297,6 +354,7 @@ impl<const N: usize> BigInt<N> {
         let mut i = 0;
         while i < N {
             self.0[i] = adc!(self.0[i], other.0[i], &mut carry);
+            i += 1;
         }
 
         (self, carry != 0)
@@ -320,6 +378,7 @@ impl<const N: usize> BigInt<N> {
                 // self.0[i] |= last;
                 self.0[i] | self.0[i] | last;
                 last = tmp;
+                i += 1;
         }
         (self, last != 0)
     }
@@ -354,7 +413,7 @@ impl<const N: usize> BigInt<N> {
 //     }
 }
 
-impl<const N: usize> BigInteger for BigInt<N> {
+impl<const N: usize> BigInteger<N> for BigInt<N> {
     // const NUM_LIMBS: usize = N;
 
 //     #[unroll_for_loops(6)]
@@ -368,7 +427,7 @@ impl<const N: usize> BigInteger for BigInt<N> {
         let mut i = 0;
         while i < N {
             carry = arithmetic::adc_for_add_with_carry(&mut self.0[i], other.0[i], carry);
-
+            i += 1;
         }
 
         carry != 0
@@ -385,6 +444,7 @@ impl<const N: usize> BigInteger for BigInt<N> {
         let mut i = 0;
         while i < N {
             borrow = arithmetic::sbb_for_sub_with_borrow(&mut self.0[i], other.0[i], borrow);
+            i += 1;
         }
 
         borrow != 0
@@ -444,29 +504,37 @@ impl<const N: usize> BigInteger for BigInt<N> {
         // }
     }
 
-    #[inline]
-    fn mul(&self, other: &Self) -> (Self, Self) {
-        if self.is_zero() || other.is_zero() {
-            let zero = Self::zero();
-            return (zero, zero);
-        }
+    // fn mul_helper(&self, other: &Self, i: usize, r: &mut MulBuffer<N>, carry: &mut u64) {
+    //     let mut j = 0;
+    //     while j < N {
+    //         r[i + j] = mac_with_carry!(r[i + j], self.0[i], other.0[j], &mut *carry);
+    //         j += 1;
+    //     }
+    // }
 
-        unimplemented!();
+    // #[inline]
+    // fn mul(&self, other: &Self) -> (Self, Self) {
+    //     if self.is_zero() || other.is_zero() {
+    //         let zero = Self::zero();
+    //         return (zero, zero);
+    //     }
 
-        // let mut r = crate::const_helpers::MulBuffer::<N>::zeroed();
+    //     // unimplemented!();
 
-        // let mut carry = 0;
+    //     let mut r = MulBuffer::<N>::zeroed();
 
-        // for i in 0..N {
-        //     for j in 0..N {
-        //         r[i + j] = mac_with_carry!(r[i + j], self.0[i], other.0[j], &mut carry);
-        //     }
-        //     r.b1[i] = carry;
-        //     carry = 0;
-        // }
+    //     let mut carry = 0;
 
-        // (Self(r.b0), Self(r.b1))
-    }
+    //     let mut i = 0;
+    //     while i < N {
+    //         self.mul_helper(other, i, &mut r, &mut carry);
+    //         r.b1[i] = carry;
+    //         carry = 0;
+    //         i += 1;
+    //     }
+
+    //     (Self(r.b0), Self(r.b1))
+    // }
 
     #[inline]
     fn mul_low(&self, other: &Self) -> Self {
@@ -479,11 +547,15 @@ impl<const N: usize> BigInteger for BigInt<N> {
         // let mut res = Self::zero();
         // let mut carry = 0;
 
-        // for i in 0..N {
-        //     for j in 0..(N - i) {
+        // let mut i = 0;
+        // while i < N {
+        //     let mut j = 0;
+        //     while j < N - i {
         //         res.0[i + j] = mac_with_carry!(res.0[i + j], self.0[i], other.0[j], &mut carry);
+        //         j += 1;
         //     }
         //     carry = 0;
+        //     i += 1;
         // }
 
         // res
@@ -661,7 +733,7 @@ impl<const N: usize> BigInteger for BigInt<N> {
 
 // impl<const N: usize> Debug for BigInt<N> {
 //     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-//         write!(f, "{:?}", BigUint::from(*self))
+//         write!(f, "{:?}", "a")
 //     }
 // }
 
@@ -1008,29 +1080,29 @@ pub type BigInteger832 = BigInt<13>;
 // /// This defines a `BigInteger`, a smart wrapper around a
 // /// sequence of `u64` limbs, least-significant limb first.
 // // TODO: get rid of this trait once we can use associated constants in const generics.
-pub trait BigInteger:
+pub trait BigInteger<const N: usize>:
     Sized
 //     CanonicalSerialize
 //     + CanonicalDeserialize
-//     + Copy
-//     + Clone
-//     + Debug
+    + Copy
+    + Clone
+    // + Debug
 //     + Default
 //     + Display
-//     + Eq
+    // + Eq
 //     + Ord
 //     + Send
 //     + Sized
 //     + Sync
 //     + 'static
-//     + UniformRand
+    // + UniformRand
 //     + Zeroize
 //     + AsMut<[u64]>
 //     + AsRef<[u64]>
-//     + From<u64>
-//     + From<u32>
-//     + From<u16>
-//     + From<u8>
+    + From<u64>
+    + From<u32>
+    + From<u16>
+    + From<u8>
 //     + TryFrom<BigUint, Error = ()>
 //     + FromStr
 //     + Into<BigUint>
@@ -1186,6 +1258,7 @@ pub trait BigInteger:
     /// ```
     fn mul_high(&self, other: &Self) -> Self;
 
+    // fn mul_helper(&self, other: &Self, i: usize, r: &mut MulBuffer<N>, carry: &mut u64);
     /// Multiplies this [`BigInteger`] by another `BigInteger`, returning both low and high bits of the result.
     ///
     /// # Example
@@ -1208,7 +1281,7 @@ pub trait BigInteger:
     /// assert_eq!(low_bits, max_plus_max);
     /// assert_eq!(high_bits, B::from(1u64));
     /// ```
-    fn mul(&self, other: &Self) -> (Self, Self);
+    // fn mul(&self, other: &Self) -> (Self, Self);
 
     /// Performs a rightwise bitshift of this number, effectively dividing
     /// it by 2.
