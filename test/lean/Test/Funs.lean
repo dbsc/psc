@@ -44,11 +44,13 @@ divergent def arithmetics.BigInt.add_with_carry_loop
   then
     do
     let (i1, index_mut_back) ← Array.index_mut_usize U64 N a i
+    let (_, index_mut_back2) ← Array.index_mut_usize U64 N b i
     let i2 ← Array.index_usize U64 N b i
     let (carry1, i3) ← arithmetics.adc_for_add_with_carry i1 i2 carry
     let i4 ← i + 1#usize
     let a1 ← index_mut_back i3
-    arithmetics.BigInt.add_with_carry_loop N a1 b carry1 i4
+    let b1 ← index_mut_back2 0#u64
+    arithmetics.BigInt.add_with_carry_loop N a1 b1 carry1 i4
   else Result.ret (carry != 0#u8, a)
 
 /- [test::arithmetics::{test::arithmetics::BigInt<N>#1}::add_with_carry]:

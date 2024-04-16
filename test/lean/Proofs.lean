@@ -28,6 +28,7 @@ lemma valImpl_ge_zero (l : List U64) : BigInt.valImpl l ≥ 0 := by
   }
   | [] => simp
 
+
 @[simp]
 lemma tmp : Inhabited U64 := by
   constructor
@@ -328,32 +329,67 @@ lemma full_slice (l : List α) (N: Int) (h : N = l.len): List.slice 0 N l = l :=
   simp only [sub_zero, List.idrop_zero]
   simp only [full_itake, h]
 
-lemma inductive_overflow:
-∀ (N:Usize) (self : arithmetics.BigInt N) (other : arithmetics.BigInt N)(b1:Bool)(val1:arithmetics.BigInt (N))
-(h1:N ≥ 1#usize )(h2:arithmetics.BigInt.add_with_carry N self other = .ret (b1, val1)), (∃ (M:Usize) (self_reduit : arithmetics.BigInt (M)) (other_reduit : arithmetics.BigInt (M)) 
-(self_val:U64) (other_val:U64)  (val2:arithmetics.BigInt (M))
- (b2:Bool), N-1#usize=ret M ∧  self.num.val=self_val::self_reduit.num.val ∧ other.num.val=other_val::other_reduit.num.val
-∧arithmetics.BigInt.add_with_carry M self_reduit other_reduit = .ret (b2, val2) ∧ 
-((b1=true) ↔ (self_val+other_val ≥ U64.max ∨ (self_val+other_val = U64.max-1 ∧ b2)))):=
-sorry
-
-lemma inductive_addition:
-∀ (N:Usize) (self : arithmetics.BigInt N) (other : arithmetics.BigInt N)(M:Usize)
-(self_val:U64)(other_val:U64)(h1:N ≥ 1#usize )(h2:N-1#usize=ret M)
-(h3:∃self_reduit : arithmetics.BigInt (M),self.num.val=self_val::self_reduit.num.val)
-(h4:∃other_reduit : arithmetics.BigInt (M),other.num.val=other_val::other_reduit.num.val),
-self_val+other_val≤U64.max-2 → self.val+other.val ≤ BigInt.max_value N:=
-by sorry
-
-def toInt : U8 →  ℤ
-| ⟨val, _,_⟩ => val
-
+def BigInt.valImpl_onlyfirst (l : List U64) (i:Usize): Int :=
+  match l with
+  | a::b => match i.val with 
+    |0 =>(valImpl_onlyfirst b i) * (2 ^ 64)
+    |_ =>a.val+(valImpl_onlyfirst b i-1) * (2 ^ 64)
+  | [] => 0
 lemma add_with_carry_loop_overflow_correct
   (N : Usize) (self : Array U64 N) (other : Array U64 N) (carry : U8) (i : Usize)
-  (h : i ≤ N) (hc : toInt carry ≤ 1) :
+  (h : i ≤ N) (hc : carry.val ≤ 1) :
   ∃ b v, arithmetics.BigInt.add_with_carry_loop N self other carry i = .ret (b, v) ∧
-  (b ↔ BigInt.valImpl self.val + BigInt.valImpl other.val + carry.val  > BigInt.max_value N) := by
-  sorry
+  (b ↔ BigInt.valImpl self.val + BigInt.valImpl other.val + carry.val* (BigInt.max_value i+1) > BigInt.max_value N) := by
+  rw [BigInt.add_with_carry_loop]
+  if hind : (N.val - i.val).toNat = 0 then
+    have hieqN : i = N := by 
+      {
+        simp only [Int.toNat_eq_zero, tsub_le_iff_right, zero_add] at hind; 
+        simp [Scalar.le_equiv] at h
+        scalar_tac
+      }
+    simp only [hieqN, Scalar.lt_equiv, lt_self_iff_false, ↓reduceIte, ret.injEq, Prod.mk.injEq,
+        Int.add_mul_emod_self_left]
+    exists (carry != 0#u8), self
+    simp only [and_self, bne_iff_ne, ne_eq, Scalar.neq_to_neq_val, Scalar.ofInt_val_eq, gt_iff_lt,
+      true_and]
+    apply Iff.intro
+    intro h₀
+    have hχ: carry.val=1:=
+      by scalar_tac
+    rw[hχ]
+    simp
+    have hs:BigInt.valImpl self.val ≥ 0 :=
+     by exact valImpl_ge_zero self.val
+    have ho:BigInt.valImpl other.val ≥ 0 :=
+     by exact valImpl_ge_zero other.val
+    simp only [gt_iff_lt]
+    linarith
+    intro h₁
+    contrapose! h₁
+    rw[h₁]
+    simp
+    sorry
+  else 
+   have hiltN : i < N := by {
+        simp only [Int.toNat_eq_zero, tsub_le_iff_right, zero_add, not_le] at hind 
+        simp [Scalar.lt_equiv]
+        scalar_tac
+      }
+   simp only [hiltN, lt_self_iff_false, ↓reduceIte]
+   progress with Array.index_mut_usize_spec as ⟨ i1, hi1, hi1d, hi1a ⟩
+   progress with Array.index_usize_spec as ⟨ i2, hi2 ⟩
+   progress with adc_for_add_with_carry_spec as ⟨ i3, hi3, hi3d, hi3a ⟩
+   progress as ⟨ w1, hw1 ⟩
+   simp only [hi1a, hi3a]
+   progress with Array.update_usize_spec as ⟨ a1, ha1 ⟩
+   progress with add_with_carry_loop_overflow_correct as ⟨ i4, hi4, hi4d ⟩
+   . scalar_tac
+   sorry
+   exists i4, hi4
+   simp only [true_and]
+   
+   sorry
 
 def bool_to_int (b:Bool) := if b then 0 else 1
 
@@ -373,8 +409,6 @@ by
   simp only [arithmetics.BigInt.add_with_carry]
   progress with add_with_carry_loop_overflow_correct as ⟨ i, hi, hid ⟩
   . scalar_tac
-  rw [toInt]
-  simp
   exists i,{num:=hi}
   simp
   apply Iff.intro
