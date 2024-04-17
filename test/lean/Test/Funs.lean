@@ -6,22 +6,24 @@ open Primitives
 
 namespace test
 
-/- [test::arithmetics::{test::arithmetics::BigInt<N>}::default]:
-   Source: 'src/arithmetics.rs', lines 13:4-13:24 -/
-def arithmetics.BigInt.default (N : Usize) : Result (arithmetics.BigInt N) :=
-  let a := Array.repeat U64 N 0#u64
-  Result.ret { num := a }
+/- [test::biginteger::arithmetic::adc]:
+   Source: 'src/biginteger/arithmetic.rs', lines 15:0-15:50 -/
+def biginteger.arithmetic.adc
+  (a : U64) (b : U64) (carry : U64) : Result (U64 × U64) :=
+  do
+  let i ← Scalar.cast .U128 a
+  let i1 ← Scalar.cast .U128 b
+  let i2 ← i + i1
+  let i3 ← Scalar.cast .U128 carry
+  let tmp ← i2 + i3
+  let a1 ← Scalar.cast .U64 tmp
+  let i4 ← tmp >>> 64#i32
+  let i5 ← Scalar.cast .U64 i4
+  Result.ok (i5, a1)
 
-/- Trait implementation: [test::arithmetics::{test::arithmetics::BigInt<N>}]
-   Source: 'src/arithmetics.rs', lines 12:0-12:42 -/
-def core.default.DefaulttestarithmeticsBigIntNInst (N : Usize) :
-  core.default.Default (arithmetics.BigInt N) := {
-  default := arithmetics.BigInt.default N
-}
-
-/- [test::arithmetics::adc_for_add_with_carry]:
-   Source: 'src/arithmetics.rs', lines 30:0-30:67 -/
-def arithmetics.adc_for_add_with_carry
+/- [test::biginteger::arithmetic::adc_for_add_with_carry]:
+   Source: 'src/biginteger/arithmetic.rs', lines 25:0-25:67 -/
+def biginteger.arithmetic.adc_for_add_with_carry
   (a : U64) (b : U64) (carry : U8) : Result (U8 × U64) :=
   do
   let i ← Scalar.cast .U128 a
@@ -32,29 +34,1091 @@ def arithmetics.adc_for_add_with_carry
   let a1 ← Scalar.cast .U64 tmp
   let i4 ← tmp >>> 64#i32
   let i5 ← Scalar.cast .U8 i4
-  Result.ret (i5, a1)
+  Result.ok (i5, a1)
 
-/- [test::arithmetics::{test::arithmetics::BigInt<N>#1}::add_with_carry]:
-   Source: 'src/arithmetics.rs', lines 78:4-78:54 -/
-def arithmetics.BigInt.add_with_carry
-  (N : Usize) (self : arithmetics.BigInt N) (other : arithmetics.BigInt N) :
-  Result (Bool × (arithmetics.BigInt N))
+/- [test::biginteger::arithmetic::adc_no_carry]:
+   Source: 'src/biginteger/arithmetic.rs', lines 43:0-43:59 -/
+def biginteger.arithmetic.adc_no_carry
+  (a : U64) (b : U64) (carry : U64) : Result (U64 × U64) :=
+  do
+  let i ← Scalar.cast .U128 a
+  let i1 ← Scalar.cast .U128 b
+  let i2 ← i + i1
+  let i3 ← Scalar.cast .U128 carry
+  let tmp ← i2 + i3
+  let i4 ← Scalar.cast .U64 tmp
+  Result.ok (i4, carry)
+
+/- [test::biginteger::arithmetic::sbb]:
+   Source: 'src/biginteger/arithmetic.rs', lines 60:0-60:58 -/
+def biginteger.arithmetic.sbb
+  (a : U64) (b : U64) (borrow : U64) : Result (U64 × U64) :=
+  do
+  let i ← 1#u128 <<< 64#i32
+  let i1 ← Scalar.cast .U128 a
+  let i2 ← i + i1
+  let i3 ← Scalar.cast .U128 b
+  let i4 ← i2 - i3
+  let i5 ← Scalar.cast .U128 borrow
+  let tmp ← i4 - i5
+  let a1 ← Scalar.cast .U64 tmp
+  let i6 ← tmp >>> 64#i32
+  let i7 ← Scalar.cast_bool .U64 (i6 = 0#u128)
+  Result.ok (i7, a1)
+
+/- [test::biginteger::arithmetic::sbb_for_sub_with_borrow]:
+   Source: 'src/biginteger/arithmetic.rs', lines 70:0-70:69 -/
+def biginteger.arithmetic.sbb_for_sub_with_borrow
+  (a : U64) (b : U64) (borrow : U8) : Result (U8 × U64) :=
+  do
+  let i ← 1#u128 <<< 64#i32
+  let i1 ← Scalar.cast .U128 a
+  let i2 ← i + i1
+  let i3 ← Scalar.cast .U128 b
+  let i4 ← i2 - i3
+  let i5 ← Scalar.cast .U128 borrow
+  let tmp ← i4 - i5
+  let a1 ← Scalar.cast .U64 tmp
+  let i6 ← tmp >>> 64#i32
+  let i7 := core.convert.num.FromU8Bool.from (i6 = 0#u128)
+  Result.ok (i7, a1)
+
+/- [test::biginteger::arithmetic::mac]:
+   Source: 'src/biginteger/arithmetic.rs', lines 89:0-89:58 -/
+def biginteger.arithmetic.mac
+  (a : U64) (b : U64) (c : U64) (carry : U64) : Result (U64 × U64) :=
+  do
+  let i ← Scalar.cast .U128 a
+  let i1 ← Scalar.cast .U128 b
+  let i2 ← Scalar.cast .U128 c
+  let i3 ← i1 * i2
+  let tmp ← i + i3
+  let i4 ← tmp >>> 64#i32
+  let carry1 ← Scalar.cast .U64 i4
+  let i5 ← Scalar.cast .U64 tmp
+  Result.ok (i5, carry1)
+
+/- [test::biginteger::arithmetic::mac_discard]:
+   Source: 'src/biginteger/arithmetic.rs', lines 99:0-99:59 -/
+def biginteger.arithmetic.mac_discard
+  (a : U64) (b : U64) (c : U64) (carry : U64) : Result U64 :=
+  do
+  let i ← Scalar.cast .U128 a
+  let i1 ← Scalar.cast .U128 b
+  let i2 ← Scalar.cast .U128 c
+  let i3 ← i1 * i2
+  let tmp ← i + i3
+  let i4 ← tmp >>> 64#i32
+  Scalar.cast .U64 i4
+
+/- [test::biginteger::arithmetic::mac_with_carry]:
+   Source: 'src/biginteger/arithmetic.rs', lines 124:0-124:69 -/
+def biginteger.arithmetic.mac_with_carry
+  (a : U64) (b : U64) (c : U64) (carry : U64) : Result (U64 × U64) :=
+  do
+  let i ← Scalar.cast .U128 a
+  let i1 ← Scalar.cast .U128 b
+  let i2 ← Scalar.cast .U128 c
+  let i3 ← i1 * i2
+  let i4 ← i + i3
+  let i5 ← Scalar.cast .U128 carry
+  let tmp ← i4 + i5
+  let i6 ← tmp >>> 64#i32
+  let carry1 ← Scalar.cast .U64 i6
+  let i7 ← Scalar.cast .U64 tmp
+  Result.ok (i7, carry1)
+
+/- [test::biginteger::{(core::clone::Clone for test::biginteger::BigInt<N>)#13}::clone]:
+   Source: 'src/biginteger/mod.rs', lines 38:15-38:20 -/
+def biginteger.ClonetestbigintegerBigInt.clone
+  (N : Usize) (self : biginteger.BigInt N) : Result (biginteger.BigInt N) :=
+  Result.ok self
+
+/- Trait implementation: [test::biginteger::{(core::clone::Clone for test::biginteger::BigInt<N>)#13}]
+   Source: 'src/biginteger/mod.rs', lines 38:15-38:20 -/
+def core.clone.ClonetestbigintegerBigInt (N : Usize) : core.clone.Clone
+  (biginteger.BigInt N) := {
+  clone := biginteger.ClonetestbigintegerBigInt.clone N
+}
+
+/- Trait implementation: [test::biginteger::{(core::marker::Copy for test::biginteger::BigInt<N>)#12}]
+   Source: 'src/biginteger/mod.rs', lines 38:9-38:13 -/
+def core.marker.CopytestbigintegerBigInt (N : Usize) : core.marker.Copy
+  (biginteger.BigInt N) := {
+  cloneCloneInst := core.clone.ClonetestbigintegerBigInt N
+}
+
+/- [test::biginteger::{(core::default::Default for test::biginteger::BigInt<N>)}::default]:
+   Source: 'src/biginteger/mod.rs', lines 42:4-42:24 -/
+def biginteger.DefaulttestbigintegerBigInt.default
+  (N : Usize) : Result (biginteger.BigInt N) :=
+  let a := Array.repeat U64 N 0#u64
+  Result.ok a
+
+/- Trait implementation: [test::biginteger::{(core::default::Default for test::biginteger::BigInt<N>)}]
+   Source: 'src/biginteger/mod.rs', lines 41:0-41:42 -/
+def core.default.DefaulttestbigintegerBigInt (N : Usize) : core.default.Default
+  (biginteger.BigInt N) := {
+  default := biginteger.DefaulttestbigintegerBigInt.default N
+}
+
+/- [test::biginteger::{(core::clone::Clone for test::biginteger::MulBuffer<N>)#15}::clone]:
+   Source: 'src/biginteger/mod.rs', lines 47:15-47:20 -/
+def biginteger.ClonetestbigintegerMulBuffer.clone
+  (N : Usize) (self : biginteger.MulBuffer N) :
+  Result (biginteger.MulBuffer N)
   :=
-  if N >= 1#usize
+  Result.ok self
+
+/- Trait implementation: [test::biginteger::{(core::clone::Clone for test::biginteger::MulBuffer<N>)#15}]
+   Source: 'src/biginteger/mod.rs', lines 47:15-47:20 -/
+def core.clone.ClonetestbigintegerMulBuffer (N : Usize) : core.clone.Clone
+  (biginteger.MulBuffer N) := {
+  clone := biginteger.ClonetestbigintegerMulBuffer.clone N
+}
+
+/- Trait implementation: [test::biginteger::{(core::marker::Copy for test::biginteger::MulBuffer<N>)#14}]
+   Source: 'src/biginteger/mod.rs', lines 47:9-47:13 -/
+def core.marker.CopytestbigintegerMulBuffer (N : Usize) : core.marker.Copy
+  (biginteger.MulBuffer N) := {
+  cloneCloneInst := core.clone.ClonetestbigintegerMulBuffer N
+}
+
+/- [test::biginteger::{test::biginteger::MulBuffer<N>#1}::new]:
+   Source: 'src/biginteger/mod.rs', lines 55:4-55:52 -/
+def biginteger.MulBuffer.new
+  (N : Usize) (b0 : Array U64 N) (b1 : Array U64 N) :
+  Result (biginteger.MulBuffer N)
+  :=
+  Result.ok { b0 := b0, b1 := b1 }
+
+/- [test::biginteger::{test::biginteger::MulBuffer<N>#1}::zeroed]:
+   Source: 'src/biginteger/mod.rs', lines 59:4-59:40 -/
+def biginteger.MulBuffer.zeroed
+  (N : Usize) : Result (biginteger.MulBuffer N) :=
+  let b := Array.repeat U64 N 0#u64
+  biginteger.MulBuffer.new N b b
+
+/- [test::biginteger::{test::biginteger::MulBuffer<N>#1}::get]:
+   Source: 'src/biginteger/mod.rs', lines 65:4-65:56 -/
+def biginteger.MulBuffer.get
+  (N : Usize) (self : biginteger.MulBuffer N) (index : Usize) : Result U64 :=
+  if index < N
+  then Array.index_usize U64 N self.b0 index
+  else do
+       let i ← index - N
+       Array.index_usize U64 N self.b1 i
+
+/- [test::biginteger::{test::biginteger::MulBuffer<N>#1}::get_mut]:
+   Source: 'src/biginteger/mod.rs', lines 74:4-74:62 -/
+def biginteger.MulBuffer.get_mut
+  (N : Usize) (self : biginteger.MulBuffer N) (index : Usize) :
+  Result (U64 × (U64 → Result (biginteger.MulBuffer N)))
+  :=
+  if index < N
   then
     do
-    let (i, index_mut_back) ← Array.index_mut_usize U64 N self.num 0#usize
-    let i1 ← Array.index_usize U64 N other.num 0#usize
-    let (carry, i2) ← arithmetics.adc_for_add_with_carry i i1 0#u8
-    let a ← index_mut_back i2
-    Result.ret (carry != 0#u8, { num := a })
-  else Result.ret (0#u8 != 0#u8, self)
+    let (i, index_mut_back) ← Array.index_mut_usize U64 N self.b0 index
+    let back :=
+      fun ret =>
+        do
+        let a ← index_mut_back ret
+        Result.ok { self with b0 := a }
+    Result.ok (i, back)
+  else
+    do
+    let i ← index - N
+    let (i1, index_mut_back) ← Array.index_mut_usize U64 N self.b1 i
+    let back :=
+      fun ret =>
+        do
+        let a ← index_mut_back ret
+        Result.ok { self with b1 := a }
+    Result.ok (i1, back)
 
-/- Trait implementation: [test::arithmetics::{test::arithmetics::BigInt<N>#1}]
-   Source: 'src/arithmetics.rs', lines 74:0-74:45 -/
-def test.arithmetics.BigIntegertestarithmeticsBigIntNInst (N : Usize) :
-  arithmetics.BigInteger (arithmetics.BigInt N) := {
-  add_with_carry := arithmetics.BigInt.add_with_carry N
+/- [test::biginteger::{(core::ops::index::Index<usize> for test::biginteger::MulBuffer<N>)#2}::index]:
+   Source: 'src/biginteger/mod.rs', lines 86:4-86:50 -/
+def biginteger.IndextestbigintegerMulBufferUsize.index
+  (N : Usize) (self : biginteger.MulBuffer N) (index : Usize) : Result U64 :=
+  biginteger.MulBuffer.get N self index
+
+/- Trait implementation: [test::biginteger::{(core::ops::index::Index<usize> for test::biginteger::MulBuffer<N>)#2}]
+   Source: 'src/biginteger/mod.rs', lines 83:0-83:50 -/
+def core.ops.index.IndextestbigintegerMulBufferUsize (N : Usize) :
+  core.ops.index.Index (biginteger.MulBuffer N) Usize := {
+  Output := U64
+  index := biginteger.IndextestbigintegerMulBufferUsize.index N
 }
+
+/- [test::biginteger::{(core::ops::index::IndexMut<usize> for test::biginteger::MulBuffer<N>)#3}::index_mut]:
+   Source: 'src/biginteger/mod.rs', lines 93:4-93:62 -/
+def biginteger.IndexMuttestbigintegerMulBufferUsize.index_mut
+  (N : Usize) (self : biginteger.MulBuffer N) (index : Usize) :
+  Result (U64 × (U64 → Result (biginteger.MulBuffer N)))
+  :=
+  biginteger.MulBuffer.get_mut N self index
+
+/- Trait implementation: [test::biginteger::{(core::ops::index::IndexMut<usize> for test::biginteger::MulBuffer<N>)#3}]
+   Source: 'src/biginteger/mod.rs', lines 91:0-91:53 -/
+def core.ops.index.IndexMuttestbigintegerMulBufferUsize (N : Usize) :
+  core.ops.index.IndexMut (biginteger.MulBuffer N) Usize := {
+  indexInst := core.ops.index.IndextestbigintegerMulBufferUsize N
+  index_mut := biginteger.IndexMuttestbigintegerMulBufferUsize.index_mut N
+}
+
+/- [test::biginteger::{test::biginteger::BigInt<N>#4}::new]:
+   Source: 'src/biginteger/mod.rs', lines 187:4-187:45 -/
+def biginteger.BigInt.new
+  (N : Usize) (value : Array U64 N) : Result (biginteger.BigInt N) :=
+  Result.ok value
+
+/- [test::biginteger::{test::biginteger::BigInt<N>#4}::zero]:
+   Source: 'src/biginteger/mod.rs', lines 191:4-191:31 -/
+def biginteger.BigInt.zero (N : Usize) : Result (biginteger.BigInt N) :=
+  let a := Array.repeat U64 N 0#u64
+  Result.ok a
+
+/- [test::biginteger::{test::biginteger::BigInt<N>#4}::one]:
+   Source: 'src/biginteger/mod.rs', lines 195:4-195:30 -/
+def biginteger.BigInt.one (N : Usize) : Result (biginteger.BigInt N) :=
+  do
+  let one ← biginteger.BigInt.zero N
+  let (_, index_mut_back) ← Array.index_mut_usize U64 N one 0#usize
+  let a ← index_mut_back 1#u64
+  Result.ok a
+
+/- [test::biginteger::{test::biginteger::BigInt<N>#4}::const_is_even]:
+   Source: 'src/biginteger/mod.rs', lines 202:4-202:45 -/
+def biginteger.BigInt.const_is_even
+  (N : Usize) (self : biginteger.BigInt N) : Result Bool :=
+  do
+  let i ← Array.index_usize U64 N self 0#usize
+  let i1 ← i % 2#u64
+  Result.ok (i1 = 0#u64)
+
+/- [test::biginteger::{test::biginteger::BigInt<N>#4}::const_is_odd]:
+   Source: 'src/biginteger/mod.rs', lines 207:4-207:44 -/
+def biginteger.BigInt.const_is_odd
+  (N : Usize) (self : biginteger.BigInt N) : Result Bool :=
+  do
+  let i ← Array.index_usize U64 N self 0#usize
+  let i1 ← i % 2#u64
+  Result.ok (i1 = 1#u64)
+
+/- [test::biginteger::{test::biginteger::BigInt<N>#4}::mod_4]:
+   Source: 'src/biginteger/mod.rs', lines 212:4-212:35 -/
+def biginteger.BigInt.mod_4
+  (N : Usize) (self : biginteger.BigInt N) : Result U8 :=
+  do
+  let i ← Array.index_usize U64 N self 0#usize
+  let i1 ← i <<< 62#i32
+  let i2 ← i1 >>> 62#i32
+  let i3 ← i2 % 4#u64
+  Scalar.cast .U8 i3
+
+/- [test::biginteger::{test::biginteger::BigInt<N>#4}::shr]: loop 0:
+   Source: 'src/biginteger/mod.rs', lines 222:4-235:5 -/
+divergent def biginteger.BigInt.shr_loop
+  (N : Usize) (result : biginteger.BigInt N) (t : U64) (i : Usize) :
+  Result (biginteger.BigInt N)
+  :=
+  if i < N
+  then
+    do
+    let i1 ← N - i
+    let i2 ← i1 - 1#usize
+    let a ← Array.index_usize U64 N result i2
+    let t2 ← a <<< 63#i32
+    let i3 ← N - i
+    let i4 ← i3 - 1#usize
+    let i5 ← Array.index_usize U64 N result i4
+    let i6 ← N - i
+    let i7 ← i6 - 1#usize
+    let (_, index_mut_back) ← Array.index_mut_usize U64 N result i7
+    let i8 ← i5 >>> 1#i32
+    let i9 ← N - i
+    let i10 ← i9 - 1#usize
+    let a1 ← index_mut_back i8
+    let i11 ← Array.index_usize U64 N a1 i10
+    let i12 ← N - i
+    let i13 ← i12 - 1#usize
+    let (_, index_mut_back1) ← Array.index_mut_usize U64 N a1 i13
+    let i14 ← i + 1#usize
+    let a2 ← index_mut_back1 (i11 ||| t)
+    biginteger.BigInt.shr_loop N a2 t2 i14
+  else Result.ok result
+
+/- [test::biginteger::{test::biginteger::BigInt<N>#4}::shr]:
+   Source: 'src/biginteger/mod.rs', lines 222:4-222:29 -/
+def biginteger.BigInt.shr
+  (N : Usize) (self : biginteger.BigInt N) : Result (biginteger.BigInt N) :=
+  do
+  let result ← biginteger.ClonetestbigintegerBigInt.clone N self
+  biginteger.BigInt.shr_loop N result 0#u64 0#usize
+
+/- [test::biginteger::{test::biginteger::BigInt<N>#4}::const_geq]: loop 0:
+   Source: 'src/biginteger/mod.rs', lines 251:4-273:5 -/
+divergent def biginteger.BigInt.const_geq_loop
+  (N : Usize) (self : biginteger.BigInt N) (other : biginteger.BigInt N)
+  (i : Usize) :
+  Result Bool
+  :=
+  if i < N
+  then
+    do
+    let i1 ← N - i
+    let i2 ← i1 - 1#usize
+    let a ← Array.index_usize U64 N self i2
+    let i3 ← N - i
+    let i4 ← i3 - 1#usize
+    let b ← Array.index_usize U64 N other i4
+    if a < b
+    then Result.ok false
+    else
+      if a > b
+      then Result.ok true
+      else
+        do
+        let i5 ← i + 1#usize
+        biginteger.BigInt.const_geq_loop N self other i5
+  else Result.ok true
+
+/- [test::biginteger::{test::biginteger::BigInt<N>#4}::const_geq]:
+   Source: 'src/biginteger/mod.rs', lines 251:4-251:51 -/
+def biginteger.BigInt.const_geq
+  (N : Usize) (self : biginteger.BigInt N) (other : biginteger.BigInt N) :
+  Result Bool
+  :=
+  biginteger.BigInt.const_geq_loop N self other 0#usize
+
+/- [test::biginteger::{test::biginteger::BigInt<N>#4}::two_adic_valuation]: loop 0:
+   Source: 'src/biginteger/mod.rs', lines 278:4-291:5 -/
+divergent def biginteger.BigInt.two_adic_valuation_loop
+  (N : Usize) (self : biginteger.BigInt N) (two_adicity : U32) : Result U32 :=
+  do
+  let b ← biginteger.BigInt.const_is_even N self
+  if b
+  then
+    do
+    let self1 ← biginteger.BigInt.shr N self
+    let two_adicity1 ← two_adicity + 1#u32
+    biginteger.BigInt.two_adic_valuation_loop N self1 two_adicity1
+  else Result.ok two_adicity
+
+/- [test::biginteger::{test::biginteger::BigInt<N>#4}::two_adic_valuation]:
+   Source: 'src/biginteger/mod.rs', lines 278:4-278:46 -/
+def biginteger.BigInt.two_adic_valuation
+  (N : Usize) (self : biginteger.BigInt N) : Result U32 :=
+  do
+  let b ← biginteger.BigInt.const_is_odd N self
+  if ¬ b
+  then Result.fail .panic
+  else
+    do
+    let i ← Array.index_usize U64 N self 0#usize
+    let (_, index_mut_back) ← Array.index_mut_usize U64 N self 0#usize
+    let i1 ← i - 1#u64
+    let a ← index_mut_back i1
+    biginteger.BigInt.two_adic_valuation_loop N a 0#u32
+
+/- [test::biginteger::{test::biginteger::BigInt<N>#4}::two_adic_coefficient]: loop 0:
+   Source: 'src/biginteger/mod.rs', lines 297:4-309:5 -/
+divergent def biginteger.BigInt.two_adic_coefficient_loop
+  (N : Usize) (self : biginteger.BigInt N) : Result (biginteger.BigInt N) :=
+  do
+  let b ← biginteger.BigInt.const_is_even N self
+  if b
+  then
+    do
+    let self1 ← biginteger.BigInt.shr N self
+    biginteger.BigInt.two_adic_coefficient_loop N self1
+  else
+    do
+    let b1 ← biginteger.BigInt.const_is_odd N self
+    if ¬ b1
+    then Result.fail .panic
+    else Result.ok self
+
+/- [test::biginteger::{test::biginteger::BigInt<N>#4}::two_adic_coefficient]:
+   Source: 'src/biginteger/mod.rs', lines 297:4-297:49 -/
+def biginteger.BigInt.two_adic_coefficient
+  (N : Usize) (self : biginteger.BigInt N) : Result (biginteger.BigInt N) :=
+  do
+  let b ← biginteger.BigInt.const_is_odd N self
+  if ¬ b
+  then Result.fail .panic
+  else
+    do
+    let i ← Array.index_usize U64 N self 0#usize
+    let (_, index_mut_back) ← Array.index_mut_usize U64 N self 0#usize
+    let i1 ← i - 1#u64
+    let a ← index_mut_back i1
+    biginteger.BigInt.two_adic_coefficient_loop N a
+
+/- [test::biginteger::{test::biginteger::BigInt<N>#4}::divide_by_2_round_down]:
+   Source: 'src/biginteger/mod.rs', lines 316:4-316:51 -/
+def biginteger.BigInt.divide_by_2_round_down
+  (N : Usize) (self : biginteger.BigInt N) : Result (biginteger.BigInt N) :=
+  do
+  let b ← biginteger.BigInt.const_is_odd N self
+  if b
+  then
+    do
+    let i ← Array.index_usize U64 N self 0#usize
+    let (_, index_mut_back) ← Array.index_mut_usize U64 N self 0#usize
+    let i1 ← i - 1#u64
+    let a ← index_mut_back i1
+    biginteger.BigInt.shr N a
+  else biginteger.BigInt.shr N self
+
+/- [test::biginteger::{test::biginteger::BigInt<N>#4}::const_num_bits]:
+   Source: 'src/biginteger/mod.rs', lines 327:4-327:44 -/
+def biginteger.BigInt.const_num_bits
+  (N : Usize) (self : biginteger.BigInt N) : Result U32 :=
+  do
+  let i ← N - 1#usize
+  let i1 ← i * 64#usize
+  let i2 ← Scalar.cast .U32 i1
+  let i3 ← N - 1#usize
+  let i4 ← Array.index_usize U64 N self i3
+  let i5 := core.num.U64.leading_zeros i4
+  let i6 ← 64#u32 - i5
+  i2 + i6
+
+/- [test::biginteger::{test::biginteger::BigInt<N>#4}::const_sub_with_borrow]: loop 0:
+   Source: 'src/biginteger/mod.rs', lines 332:4-345:5 -/
+divergent def biginteger.BigInt.const_sub_with_borrow_loop
+  (N : Usize) (self : biginteger.BigInt N) (other : biginteger.BigInt N)
+  (borrow : I32) (i : Usize) :
+  Result ((biginteger.BigInt N) × Bool)
+  :=
+  if i < N
+  then
+    do
+    let i1 ← 1#u128 <<< 64#i32
+    let i2 ← Array.index_usize U64 N self i
+    let i3 ← Scalar.cast .U128 i2
+    let i4 ← i1 + i3
+    let i5 ← Array.index_usize U64 N other i
+    let i6 ← Scalar.cast .U128 i5
+    let i7 ← i4 - i6
+    let i8 ← Scalar.cast .U128 borrow
+    let tmp ← i7 - i8
+    let i9 ← tmp >>> 64#i32
+    if i9 = 0#u128
+    then
+      do
+      let i10 ← Scalar.cast .U64 tmp
+      let (_, index_mut_back) ← Array.index_mut_usize U64 N self i
+      let i11 ← i + 1#usize
+      let a ← index_mut_back i10
+      biginteger.BigInt.const_sub_with_borrow_loop N a other 1#i32 i11
+    else
+      do
+      let i10 ← Scalar.cast .U64 tmp
+      let (_, index_mut_back) ← Array.index_mut_usize U64 N self i
+      let i11 ← i + 1#usize
+      let a ← index_mut_back i10
+      biginteger.BigInt.const_sub_with_borrow_loop N a other 0#i32 i11
+  else Result.ok (self, borrow != 0#i32)
+
+/- [test::biginteger::{test::biginteger::BigInt<N>#4}::const_sub_with_borrow]:
+   Source: 'src/biginteger/mod.rs', lines 332:4-332:85 -/
+def biginteger.BigInt.const_sub_with_borrow
+  (N : Usize) (self : biginteger.BigInt N) (other : biginteger.BigInt N) :
+  Result ((biginteger.BigInt N) × Bool)
+  :=
+  biginteger.BigInt.const_sub_with_borrow_loop N self other 0#i32 0#usize
+
+/- [test::biginteger::{test::biginteger::BigInt<N>#4}::const_add_with_carry]: loop 0:
+   Source: 'src/biginteger/mod.rs', lines 348:4-361:5 -/
+divergent def biginteger.BigInt.const_add_with_carry_loop
+  (N : Usize) (self : biginteger.BigInt N) (other : biginteger.BigInt N)
+  (carry : U64) (i : Usize) :
+  Result ((biginteger.BigInt N) × Bool)
+  :=
+  if i < N
+  then
+    do
+    let i1 ← Array.index_usize U64 N self i
+    let i2 ← Scalar.cast .U128 i1
+    let i3 ← Array.index_usize U64 N other i
+    let i4 ← Scalar.cast .U128 i3
+    let i5 ← i2 + i4
+    let i6 ← Scalar.cast .U128 carry
+    let tmp ← i5 + i6
+    let i7 ← tmp >>> 64#i32
+    let carry1 ← Scalar.cast .U64 i7
+    let i8 ← Scalar.cast .U64 tmp
+    let (_, index_mut_back) ← Array.index_mut_usize U64 N self i
+    let i9 ← i + 1#usize
+    let a ← index_mut_back i8
+    biginteger.BigInt.const_add_with_carry_loop N a other carry1 i9
+  else Result.ok (self, carry != 0#u64)
+
+/- [test::biginteger::{test::biginteger::BigInt<N>#4}::const_add_with_carry]:
+   Source: 'src/biginteger/mod.rs', lines 348:4-348:84 -/
+def biginteger.BigInt.const_add_with_carry
+  (N : Usize) (self : biginteger.BigInt N) (other : biginteger.BigInt N) :
+  Result ((biginteger.BigInt N) × Bool)
+  :=
+  biginteger.BigInt.const_add_with_carry_loop N self other 0#u64 0#usize
+
+/- [test::biginteger::{test::biginteger::BigInt<N>#4}::const_mul2_with_carry]: loop 0:
+   Source: 'src/biginteger/mod.rs', lines 363:4-384:5 -/
+divergent def biginteger.BigInt.const_mul2_with_carry_loop
+  (N : Usize) (self : biginteger.BigInt N) (last : U64) (i : Usize) :
+  Result ((biginteger.BigInt N) × Bool)
+  :=
+  if i < N
+  then
+    do
+    let a ← Array.index_usize U64 N self i
+    let tmp ← a >>> 63#i32
+    let i1 ← Array.index_usize U64 N self i
+    let i2 ← Array.index_usize U64 N self i
+    let i3 ← i1 <<< i2
+    let _ ← i3 <<< 1#i32
+    let _ ← Array.index_usize U64 N self i
+    let _ ← Array.index_usize U64 N self i
+    let i4 ← i + 1#usize
+    biginteger.BigInt.const_mul2_with_carry_loop N self tmp i4
+  else Result.ok (self, last != 0#u64)
+
+/- [test::biginteger::{test::biginteger::BigInt<N>#4}::const_mul2_with_carry]:
+   Source: 'src/biginteger/mod.rs', lines 363:4-363:60 -/
+def biginteger.BigInt.const_mul2_with_carry
+  (N : Usize) (self : biginteger.BigInt N) :
+  Result ((biginteger.BigInt N) × Bool)
+  :=
+  biginteger.BigInt.const_mul2_with_carry_loop N self 0#u64 0#usize
+
+/- [test::biginteger::{test::biginteger::BigInt<N>#4}::const_is_zero]: loop 0:
+   Source: 'src/biginteger/mod.rs', lines 386:4-398:5 -/
+divergent def biginteger.BigInt.const_is_zero_loop
+  (N : Usize) (self : biginteger.BigInt N) (is_zero : Bool) (i : Usize) :
+  Result Bool
+  :=
+  if i < N
+  then
+    if is_zero
+    then
+      do
+      let i1 ← Array.index_usize U64 N self i
+      let i2 ← i + 1#usize
+      biginteger.BigInt.const_is_zero_loop N self (i1 = 0#u64) i2
+    else
+      do
+      let i1 ← i + 1#usize
+      biginteger.BigInt.const_is_zero_loop N self false i1
+  else Result.ok is_zero
+
+/- [test::biginteger::{test::biginteger::BigInt<N>#4}::const_is_zero]:
+   Source: 'src/biginteger/mod.rs', lines 386:4-386:52 -/
+def biginteger.BigInt.const_is_zero
+  (N : Usize) (self : biginteger.BigInt N) : Result Bool :=
+  biginteger.BigInt.const_is_zero_loop N self true 0#usize
+
+/- [test::biginteger::{(core::convert::From<u64> for test::biginteger::BigInt<N>)#8}::from]:
+   Source: 'src/biginteger/mod.rs', lines 805:4-805:34 -/
+def biginteger.FromtestbigintegerBigIntU64.from
+  (N : Usize) (val : U64) : Result (biginteger.BigInt N) :=
+  do
+  let repr ← biginteger.DefaulttestbigintegerBigInt.default N
+  let (_, index_mut_back) ← Array.index_mut_usize U64 N repr 0#usize
+  let a ← index_mut_back val
+  Result.ok a
+
+/- Trait implementation: [test::biginteger::{(core::convert::From<u64> for test::biginteger::BigInt<N>)#8}]
+   Source: 'src/biginteger/mod.rs', lines 803:0-803:44 -/
+def core.convert.FromtestbigintegerBigIntU64 (N : Usize) : core.convert.From
+  (biginteger.BigInt N) U64 := {
+  from_ := biginteger.FromtestbigintegerBigIntU64.from N
+}
+
+/- [test::biginteger::{(core::convert::From<u32> for test::biginteger::BigInt<N>)#9}::from]:
+   Source: 'src/biginteger/mod.rs', lines 814:4-814:34 -/
+def biginteger.FromtestbigintegerBigIntU32.from
+  (N : Usize) (val : U32) : Result (biginteger.BigInt N) :=
+  do
+  let repr ← biginteger.DefaulttestbigintegerBigInt.default N
+  let i := core.convert.num.FromU64U32.from val
+  let (_, index_mut_back) ← Array.index_mut_usize U64 N repr 0#usize
+  let a ← index_mut_back i
+  Result.ok a
+
+/- Trait implementation: [test::biginteger::{(core::convert::From<u32> for test::biginteger::BigInt<N>)#9}]
+   Source: 'src/biginteger/mod.rs', lines 812:0-812:44 -/
+def core.convert.FromtestbigintegerBigIntU32 (N : Usize) : core.convert.From
+  (biginteger.BigInt N) U32 := {
+  from_ := biginteger.FromtestbigintegerBigIntU32.from N
+}
+
+/- [test::biginteger::{(core::convert::From<u16> for test::biginteger::BigInt<N>)#10}::from]:
+   Source: 'src/biginteger/mod.rs', lines 823:4-823:34 -/
+def biginteger.FromtestbigintegerBigIntU16.from
+  (N : Usize) (val : U16) : Result (biginteger.BigInt N) :=
+  do
+  let repr ← biginteger.DefaulttestbigintegerBigInt.default N
+  let i := core.convert.num.FromU64U16.from val
+  let (_, index_mut_back) ← Array.index_mut_usize U64 N repr 0#usize
+  let a ← index_mut_back i
+  Result.ok a
+
+/- Trait implementation: [test::biginteger::{(core::convert::From<u16> for test::biginteger::BigInt<N>)#10}]
+   Source: 'src/biginteger/mod.rs', lines 821:0-821:44 -/
+def core.convert.FromtestbigintegerBigIntU16 (N : Usize) : core.convert.From
+  (biginteger.BigInt N) U16 := {
+  from_ := biginteger.FromtestbigintegerBigIntU16.from N
+}
+
+/- [test::biginteger::{(core::convert::From<u8> for test::biginteger::BigInt<N>)#11}::from]:
+   Source: 'src/biginteger/mod.rs', lines 832:4-832:33 -/
+def biginteger.FromtestbigintegerBigIntU8.from
+  (N : Usize) (val : U8) : Result (biginteger.BigInt N) :=
+  do
+  let repr ← biginteger.DefaulttestbigintegerBigInt.default N
+  let i := core.convert.num.FromU64U8.from val
+  let (_, index_mut_back) ← Array.index_mut_usize U64 N repr 0#usize
+  let a ← index_mut_back i
+  Result.ok a
+
+/- Trait implementation: [test::biginteger::{(core::convert::From<u8> for test::biginteger::BigInt<N>)#11}]
+   Source: 'src/biginteger/mod.rs', lines 830:0-830:43 -/
+def core.convert.FromtestbigintegerBigIntU8 (N : Usize) : core.convert.From
+  (biginteger.BigInt N) U8 := {
+  from_ := biginteger.FromtestbigintegerBigIntU8.from N
+}
+
+/- [test::biginteger::{(test::biginteger::BigInteger<N> for test::biginteger::BigInt<N>)#5}::add_with_carry]: loop 0:
+   Source: 'src/biginteger/mod.rs', lines 421:4-434:5 -/
+divergent def biginteger.BigIntegertestbigintegerBigIntN.add_with_carry_loop
+  (N : Usize) (self : biginteger.BigInt N) (other : biginteger.BigInt N)
+  (carry : U8) (i : Usize) :
+  Result (Bool × (biginteger.BigInt N))
+  :=
+  if i < N
+  then
+    do
+    let (i1, index_mut_back) ← Array.index_mut_usize U64 N self i
+    let i2 ← Array.index_usize U64 N other i
+    let (carry1, i3) ←
+      biginteger.arithmetic.adc_for_add_with_carry i1 i2 carry
+    let i4 ← i + 1#usize
+    let a ← index_mut_back i3
+    biginteger.BigIntegertestbigintegerBigIntN.add_with_carry_loop N a other
+      carry1 i4
+  else Result.ok (carry != 0#u8, self)
+
+/- [test::biginteger::{(test::biginteger::BigInteger<N> for test::biginteger::BigInt<N>)#5}::add_with_carry]:
+   Source: 'src/biginteger/mod.rs', lines 421:4-421:54 -/
+def biginteger.BigIntegertestbigintegerBigIntN.add_with_carry
+  (N : Usize) (self : biginteger.BigInt N) (other : biginteger.BigInt N) :
+  Result (Bool × (biginteger.BigInt N))
+  :=
+  biginteger.BigIntegertestbigintegerBigIntN.add_with_carry_loop N self other
+    0#u8 0#usize
+
+/- [test::biginteger::{(test::biginteger::BigInteger<N> for test::biginteger::BigInt<N>)#5}::sub_with_borrow]: loop 0:
+   Source: 'src/biginteger/mod.rs', lines 438:4-451:5 -/
+divergent def biginteger.BigIntegertestbigintegerBigIntN.sub_with_borrow_loop
+  (N : Usize) (self : biginteger.BigInt N) (other : biginteger.BigInt N)
+  (borrow : U8) (i : Usize) :
+  Result (Bool × (biginteger.BigInt N))
+  :=
+  if i < N
+  then
+    do
+    let (i1, index_mut_back) ← Array.index_mut_usize U64 N self i
+    let i2 ← Array.index_usize U64 N other i
+    let (borrow1, i3) ←
+      biginteger.arithmetic.sbb_for_sub_with_borrow i1 i2 borrow
+    let i4 ← i + 1#usize
+    let a ← index_mut_back i3
+    biginteger.BigIntegertestbigintegerBigIntN.sub_with_borrow_loop N a other
+      borrow1 i4
+  else Result.ok (borrow != 0#u8, self)
+
+/- [test::biginteger::{(test::biginteger::BigInteger<N> for test::biginteger::BigInt<N>)#5}::sub_with_borrow]:
+   Source: 'src/biginteger/mod.rs', lines 438:4-438:55 -/
+def biginteger.BigIntegertestbigintegerBigIntN.sub_with_borrow
+  (N : Usize) (self : biginteger.BigInt N) (other : biginteger.BigInt N) :
+  Result (Bool × (biginteger.BigInt N))
+  :=
+  biginteger.BigIntegertestbigintegerBigIntN.sub_with_borrow_loop N self other
+    0#u8 0#usize
+
+/- [test::biginteger::{(test::biginteger::BigInteger<N> for test::biginteger::BigInt<N>)#5}::mul2]: loop 0:
+   Source: 'src/biginteger/mod.rs', lines 455:4-474:5 -/
+divergent def biginteger.BigIntegertestbigintegerBigIntN.mul2_loop
+  (N : Usize) (self : biginteger.BigInt N) (last : U64) (i : Usize) :
+  Result (Bool × (biginteger.BigInt N))
+  :=
+  if i < N
+  then
+    do
+    let (a, index_mut_back) ← Array.index_mut_usize U64 N self i
+    let tmp ← a >>> 63#i32
+    let a1 ← a <<< 1#i32
+    let i1 ← i + 1#usize
+    let a2 ← index_mut_back (a1 ||| last)
+    biginteger.BigIntegertestbigintegerBigIntN.mul2_loop N a2 tmp i1
+  else Result.ok (last != 0#u64, self)
+
+/- [test::biginteger::{(test::biginteger::BigInteger<N> for test::biginteger::BigInt<N>)#5}::mul2]:
+   Source: 'src/biginteger/mod.rs', lines 455:4-455:30 -/
+def biginteger.BigIntegertestbigintegerBigIntN.mul2
+  (N : Usize) (self : biginteger.BigInt N) :
+  Result (Bool × (biginteger.BigInt N))
+  :=
+  biginteger.BigIntegertestbigintegerBigIntN.mul2_loop N self 0#u64 0#usize
+
+/- [test::biginteger::{(test::biginteger::BigInteger<N> for test::biginteger::BigInt<N>)#5}::muln]:
+   Source: 'src/biginteger/mod.rs', lines 477:4-477:34 -/
+def biginteger.BigIntegertestbigintegerBigIntN.muln
+  (N : Usize) (self : biginteger.BigInt N) (n : U32) :
+  Result (biginteger.BigInt N)
+  :=
+  do
+  let i ← 64#usize * N
+  let i1 ← Scalar.cast .U32 i
+  if n >= i1
+  then biginteger.BigInt.zero N
+  else Result.fail .panic
+
+
+/- [test::biginteger::{(test::biginteger::BigInteger<N> for test::biginteger::BigInt<N>)#5}::is_zero]: loop 0:
+   Source: 'src/biginteger/mod.rs', lines 630:4-639:5 -/
+divergent def biginteger.BigIntegertestbigintegerBigIntN.is_zero_loop
+  (N : Usize) (self : biginteger.BigInt N) (is_zero : Bool) (i : Usize) :
+  Result Bool
+  :=
+  if i < N
+  then
+    if is_zero
+    then
+      do
+      let i1 ← Array.index_usize U64 N self i
+      let i2 ← i + 1#usize
+      biginteger.BigIntegertestbigintegerBigIntN.is_zero_loop N self (i1 =
+        0#u64) i2
+    else
+      do
+      let i1 ← i + 1#usize
+      biginteger.BigIntegertestbigintegerBigIntN.is_zero_loop N self false i1
+  else Result.ok is_zero
+
+/- [test::biginteger::{(test::biginteger::BigInteger<N> for test::biginteger::BigInt<N>)#5}::is_zero]:
+   Source: 'src/biginteger/mod.rs', lines 630:4-630:29 -/
+def biginteger.BigIntegertestbigintegerBigIntN.is_zero
+  (N : Usize) (self : biginteger.BigInt N) : Result Bool :=
+  biginteger.BigIntegertestbigintegerBigIntN.is_zero_loop N self true 0#usize
+
+/- [test::biginteger::{(test::biginteger::BigInteger<N> for test::biginteger::BigInt<N>)#5}::mul_low]:
+   Source: 'src/biginteger/mod.rs', lines 540:4-540:43 -/
+def biginteger.BigIntegertestbigintegerBigIntN.mul_low
+  (N : Usize) (self : biginteger.BigInt N) (other : biginteger.BigInt N) :
+  Result (biginteger.BigInt N)
+  :=
+  do
+  let b ← biginteger.BigIntegertestbigintegerBigIntN.is_zero N self
+  if b
+  then biginteger.BigInt.zero N
+  else
+    do
+    let b1 ← biginteger.BigIntegertestbigintegerBigIntN.is_zero N other
+    if b1
+    then biginteger.BigInt.zero N
+    else Result.fail .panic
+
+/- [test::biginteger::{(test::biginteger::BigInteger<N> for test::biginteger::BigInt<N>)#5}::mul_high]:
+   Source: 'src/biginteger/mod.rs', lines 565:4-565:44 -/
+def biginteger.BigIntegertestbigintegerBigIntN.mul_high
+  (N : Usize) (self : biginteger.BigInt N) (other : biginteger.BigInt N) :
+  Result (biginteger.BigInt N)
+  :=
+  Result.fail .panic
+
+/- [test::biginteger::{(test::biginteger::BigInteger<N> for test::biginteger::BigInt<N>)#5}::div2]: loop 0:
+   Source: 'src/biginteger/mod.rs', lines 571:4-586:5 -/
+divergent def biginteger.BigIntegertestbigintegerBigIntN.div2_loop
+  (N : Usize) (self : biginteger.BigInt N) (i : Usize) :
+  Result (biginteger.BigInt N)
+  :=
+  if i >= 0#usize
+  then
+    do
+    let i1 ← Array.index_usize U64 N self i
+    let _ ← i1 <<< 63#i32
+    let i2 ← Array.index_usize U64 N self i
+    let (_, index_mut_back) ← Array.index_mut_usize U64 N self i
+    let i3 ← i2 >>> 1#i32
+    let a ← index_mut_back i3
+    let i4 ← Array.index_usize U64 N a i
+    let (_, index_mut_back1) ← Array.index_mut_usize U64 N a i
+    let i5 ← i - 1#usize
+    let a1 ← index_mut_back1 (i4 ||| 0#u64)
+    biginteger.BigIntegertestbigintegerBigIntN.div2_loop N a1 i5
+  else Result.ok self
+
+/- [test::biginteger::{(test::biginteger::BigInteger<N> for test::biginteger::BigInt<N>)#5}::div2]:
+   Source: 'src/biginteger/mod.rs', lines 571:4-571:22 -/
+def biginteger.BigIntegertestbigintegerBigIntN.div2
+  (N : Usize) (self : biginteger.BigInt N) : Result (biginteger.BigInt N) :=
+  do
+  let i ← N - 1#usize
+  biginteger.BigIntegertestbigintegerBigIntN.div2_loop N self i
+
+/- [test::biginteger::{(test::biginteger::BigInteger<N> for test::biginteger::BigInt<N>)#5}::divn]:
+   Source: 'src/biginteger/mod.rs', lines 589:4-589:34 -/
+def biginteger.BigIntegertestbigintegerBigIntN.divn
+  (N : Usize) (self : biginteger.BigInt N) (n : U32) :
+  Result (biginteger.BigInt N)
+  :=
+  do
+  let i ← 64#usize * N
+  let i1 ← Scalar.cast .U32 i
+  if n >= i1
+  then biginteger.BigInt.zero N
+  else Result.fail .panic
+
+/- [test::biginteger::{(test::biginteger::BigInteger<N> for test::biginteger::BigInt<N>)#5}::is_odd]:
+   Source: 'src/biginteger/mod.rs', lines 620:4-620:28 -/
+def biginteger.BigIntegertestbigintegerBigIntN.is_odd
+  (N : Usize) (self : biginteger.BigInt N) : Result Bool :=
+  do
+  let i ← Array.index_usize U64 N self 0#usize
+  Result.ok (i &&& 1#u64 = 1#u64)
+
+/- [test::biginteger::{(test::biginteger::BigInteger<N> for test::biginteger::BigInt<N>)#5}::is_even]:
+   Source: 'src/biginteger/mod.rs', lines 625:4-625:29 -/
+def biginteger.BigIntegertestbigintegerBigIntN.is_even
+  (N : Usize) (self : biginteger.BigInt N) : Result Bool :=
+  do
+  let b ← biginteger.BigIntegertestbigintegerBigIntN.is_odd N self
+  Result.ok (¬ b)
+
+/- [test::biginteger::{(test::biginteger::BigInteger<N> for test::biginteger::BigInt<N>)#5}::num_bits]: loop 0:
+   Source: 'src/biginteger/mod.rs', lines 642:4-662:5 -/
+divergent def biginteger.BigIntegertestbigintegerBigIntN.num_bits_loop
+  (N : Usize) (ret : U32) (i : Usize) : Result U32 :=
+  if i >= 0#usize
+  then
+    do
+    let leading := core.num.Usize.leading_zeros i
+    let ret1 ← ret - leading
+    if leading != 64#u32
+    then Result.ok ret1
+    else
+      do
+      let i1 ← i - 1#usize
+      biginteger.BigIntegertestbigintegerBigIntN.num_bits_loop N ret1 i1
+  else Result.ok ret
+
+/- [test::biginteger::{(test::biginteger::BigInteger<N> for test::biginteger::BigInt<N>)#5}::num_bits]:
+   Source: 'src/biginteger/mod.rs', lines 642:4-642:29 -/
+def biginteger.BigIntegertestbigintegerBigIntN.num_bits
+  (N : Usize) (self : biginteger.BigInt N) : Result U32 :=
+  do
+  let i ← Scalar.cast .U32 N
+  let ret ← i * 64#u32
+  let i1 ← N - 1#usize
+  biginteger.BigIntegertestbigintegerBigIntN.num_bits_loop N ret i1
+
+/- [test::biginteger::{(test::biginteger::BigInteger<N> for test::biginteger::BigInt<N>)#5}::get_bit]:
+   Source: 'src/biginteger/mod.rs', lines 665:4-665:39 -/
+def biginteger.BigIntegertestbigintegerBigIntN.get_bit
+  (N : Usize) (self : biginteger.BigInt N) (i : Usize) : Result Bool :=
+  do
+  let i1 ← 64#usize * N
+  if i >= i1
+  then Result.ok false
+  else
+    do
+    let limb ← i / 64#usize
+    let i2 ← 64#usize * limb
+    let bit ← i - i2
+    let i3 ← Array.index_usize U64 N self limb
+    let i4 ← 1#u64 <<< bit
+    Result.ok (i3 &&& i4 != 0#u64)
+
+/- [test::biginteger::{(test::biginteger::BigInteger<N> for test::biginteger::BigInt<N>)#5}::to_bytes_le]:
+   Source: 'src/biginteger/mod.rs', lines 711:4-711:36 -/
+def biginteger.BigIntegertestbigintegerBigIntN.to_bytes_le
+  (N : Usize) (self : biginteger.BigInt N) : Result (alloc.vec.Vec U8) :=
+  do
+  let i ← N * 8#usize
+  let res := alloc.vec.Vec.with_capacity U8 i
+  if 0#usize < N
+  then do
+       let _ ← Array.index_usize U64 N self 0#usize
+       Result.fail .panic
+  else Result.ok res
+
+/- [test::biginteger::{(test::biginteger::BigInteger<N> for test::biginteger::BigInt<N>)#5}::from_bits_le]:
+   Source: 'src/biginteger/mod.rs', lines 682:4-682:42 -/
+def biginteger.BigIntegertestbigintegerBigIntN.from_bits_le
+  (N : Usize) (bits : Slice Bool) : Result (biginteger.BigInt N) :=
+  do
+  let res ← biginteger.BigInt.zero N
+  if 0#usize < N
+  then Result.fail .panic
+  else Result.ok res
+
+/- [test::biginteger::{(test::biginteger::BigInteger<N> for test::biginteger::BigInt<N>)#5}::from_bits_be]:
+   Source: 'src/biginteger/mod.rs', lines 676:4-676:42 -/
+def biginteger.BigIntegertestbigintegerBigIntN.from_bits_be
+  (N : Usize) (bits : Slice Bool) : Result (biginteger.BigInt N) :=
+  do
+  let bits1 ← alloc.slice.Slice.to_vec Bool core.clone.CloneBool bits
+  let (s, deref_mut_back) ← alloc.vec.DerefMutVec.deref_mut Bool bits1
+  let s1 := core.slice.Slice.reverse Bool s
+  let bits2 ← deref_mut_back s1
+  let s2 := alloc.vec.DerefVec.deref Bool bits2
+  biginteger.BigIntegertestbigintegerBigIntN.from_bits_le N s2
+
+/- [test::biginteger::{(test::biginteger::BigInteger<N> for test::biginteger::BigInt<N>)#5}::to_bytes_be]:
+   Source: 'src/biginteger/mod.rs', lines 704:4-704:36 -/
+def biginteger.BigIntegertestbigintegerBigIntN.to_bytes_be
+  (N : Usize) (self : biginteger.BigInt N) : Result (alloc.vec.Vec U8) :=
+  do
+  let le_bytes ←
+    biginteger.BigIntegertestbigintegerBigIntN.to_bytes_le N self
+  let (s, deref_mut_back) ← alloc.vec.DerefMutVec.deref_mut U8 le_bytes
+  let s1 := core.slice.Slice.reverse U8 s
+  deref_mut_back s1
+
+/- Trait implementation: [test::biginteger::{(test::biginteger::BigInteger<N> for test::biginteger::BigInt<N>)#5}]
+   Source: 'src/biginteger/mod.rs', lines 416:0-416:48 -/
+def biginteger.BigIntegertestbigintegerBigIntN (N : Usize) :
+  biginteger.BigInteger (biginteger.BigInt N) N := {
+  coremarkerCopyInst := core.marker.CopytestbigintegerBigInt N
+  corecloneCloneInst := core.clone.ClonetestbigintegerBigInt N
+  coreconvertFromSelfU64Inst := core.convert.FromtestbigintegerBigIntU64 N
+  coreconvertFromSelfU32Inst := core.convert.FromtestbigintegerBigIntU32 N
+  coreconvertFromSelfU16Inst := core.convert.FromtestbigintegerBigIntU16 N
+  coreconvertFromSelfU8Inst := core.convert.FromtestbigintegerBigIntU8 N
+  add_with_carry := biginteger.BigIntegertestbigintegerBigIntN.add_with_carry N
+  sub_with_borrow := biginteger.BigIntegertestbigintegerBigIntN.sub_with_borrow
+    N
+  mul2 := biginteger.BigIntegertestbigintegerBigIntN.mul2 N
+  muln := biginteger.BigIntegertestbigintegerBigIntN.muln N
+  mul_low := biginteger.BigIntegertestbigintegerBigIntN.mul_low N
+  mul_high := biginteger.BigIntegertestbigintegerBigIntN.mul_high N
+  div2 := biginteger.BigIntegertestbigintegerBigIntN.div2 N
+  divn := biginteger.BigIntegertestbigintegerBigIntN.divn N
+  is_odd := biginteger.BigIntegertestbigintegerBigIntN.is_odd N
+  is_even := biginteger.BigIntegertestbigintegerBigIntN.is_even N
+  is_zero := biginteger.BigIntegertestbigintegerBigIntN.is_zero N
+  num_bits := biginteger.BigIntegertestbigintegerBigIntN.num_bits N
+  get_bit := biginteger.BigIntegertestbigintegerBigIntN.get_bit N
+  from_bits_be := biginteger.BigIntegertestbigintegerBigIntN.from_bits_be N
+  from_bits_le := biginteger.BigIntegertestbigintegerBigIntN.from_bits_le N
+  to_bytes_be := biginteger.BigIntegertestbigintegerBigIntN.to_bytes_be N
+  to_bytes_le := biginteger.BigIntegertestbigintegerBigIntN.to_bytes_le N
+}
+
+/- [test::biginteger::{(core::convert::AsMut<@Slice<u64>> for test::biginteger::BigInt<N>)#6}::as_mut]:
+   Source: 'src/biginteger/mod.rs', lines 791:4-791:38 -/
+def biginteger.AsMuttestbigintegerBigIntSliceU64.as_mut
+  (N : Usize) (self : biginteger.BigInt N) :
+  Result ((Slice U64) × (Slice U64 → Result (biginteger.BigInt N)))
+  :=
+  do
+  let (s, to_slice_mut_back) ← Array.to_slice_mut U64 N self
+  let back := fun ret => do
+                         let a ← to_slice_mut_back ret
+                         Result.ok a
+  Result.ok (s, back)
+
+/- Trait implementation: [test::biginteger::{(core::convert::AsMut<@Slice<u64>> for test::biginteger::BigInt<N>)#6}]
+   Source: 'src/biginteger/mod.rs', lines 789:0-789:47 -/
+def core.convert.AsMuttestbigintegerBigIntSliceU64 (N : Usize) :
+  core.convert.AsMut (biginteger.BigInt N) (Slice U64) := {
+  as_mut := biginteger.AsMuttestbigintegerBigIntSliceU64.as_mut N
+}
+
+/- [test::biginteger::{(core::convert::AsRef<@Slice<u64>> for test::biginteger::BigInt<N>)#7}::as_ref]:
+   Source: 'src/biginteger/mod.rs', lines 798:4-798:30 -/
+def biginteger.AsReftestbigintegerBigIntSliceU64.as_ref
+  (N : Usize) (self : biginteger.BigInt N) : Result (Slice U64) :=
+  Array.to_slice U64 N self
+
+/- Trait implementation: [test::biginteger::{(core::convert::AsRef<@Slice<u64>> for test::biginteger::BigInt<N>)#7}]
+   Source: 'src/biginteger/mod.rs', lines 796:0-796:47 -/
+def core.convert.AsReftestbigintegerBigIntSliceU64 (N : Usize) :
+  core.convert.AsRef (biginteger.BigInt N) (Slice U64) := {
+  as_ref := biginteger.AsReftestbigintegerBigIntSliceU64.as_ref N
+}
+
+/- [test::biginteger::signed_mod_reduction]:
+   Source: 'src/biginteger/mod.rs', lines 1059:0-1059:56 -/
+def biginteger.signed_mod_reduction (n : U64) (modulus : U64) : Result I64 :=
+  do
+  let i ← n % modulus
+  let t ← Scalar.cast .I64 i
+  let i1 ← Scalar.cast .U64 t
+  let i2 ← modulus / 2#u64
+  if i1 >= i2
+  then do
+       let i3 ← Scalar.cast .I64 modulus
+       t - i3
+  else Result.ok t
+
+/- [test::functions::min]:
+   Source: 'src/functions.rs', lines 1:0-1:33 -/
+def functions.min (x : U32) (y : U32) : Result U32 :=
+  if x < y
+  then Result.ok x
+  else Result.ok y
+
+/- [test::functions::abs]:
+   Source: 'src/functions.rs', lines 5:0-5:25 -/
+def functions.abs (x : I32) : Result I32 :=
+  if x < 0#i32
+  then -. x
+  else Result.ok x
+
+/- [test::functions::mul2_add1]:
+   Source: 'src/functions.rs', lines 9:0-9:31 -/
+def functions.mul2_add1 (x : U32) : Result U32 :=
+  do
+  let i ← 2#u32 * x
+  i + 1#u32
+
+/- [test::biginteger::signed_mod_reduction]:
+   Source: 'src/biginteger/mod.rs', lines 1059:0-1059:56 -/
+def biginteger.signed_mod_reduction (n : U64) (modulus : U64) : Result I64 :=
+  do
+  let i ← n % modulus
+  let t ← Scalar.cast .I64 i
+  let i1 ← Scalar.cast .U64 t
+  let i2 ← modulus / 2#u64
+  if i1 >= i2
+  then do
+       let i3 ← Scalar.cast .I64 modulus
+       t - i3
+  else Result.ok t
+
+/- [test::functions::min]:
+   Source: 'src/functions.rs', lines 1:0-1:33 -/
+def functions.min (x : U32) (y : U32) : Result U32 :=
+  if x < y
+  then Result.ok x
+  else Result.ok y
+
+/- [test::functions::abs]:
+   Source: 'src/functions.rs', lines 5:0-5:25 -/
+def functions.abs (x : I32) : Result I32 :=
+  if x < 0#i32
+  then -. x
+  else Result.ok x
+
+/- [test::functions::mul2_add1]:
+   Source: 'src/functions.rs', lines 9:0-9:31 -/
+def functions.mul2_add1 (x : U32) : Result U32 :=
+  do
+  let i ← 2#u32 * x
+  i + 1#u32
 
 end test

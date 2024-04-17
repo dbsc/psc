@@ -5,19 +5,65 @@ open Primitives
 
 namespace test
 
-/- [test::arithmetics::BigInt]
-   Source: 'src/arithmetics.rs', lines 2:0-2:33 -/
-structure arithmetics.BigInt (N : Usize) where
-  num : Array U64 N
+/- [test::biginteger::BigInt]
+   Source: 'src/biginteger/mod.rs', lines 39:0-39:33 -/
+@[reducible] def biginteger.BigInt (N : Usize) := (Array U64 N)
+
+/- Trait declaration: [core::marker::Copy]
+   Source: '/rustc/d59363ad0b6391b7fc5bbb02c9ccf9300eef3753/library/core/src/marker.rs', lines 450:0-450:21
+   Name pattern: core::marker::Copy -/
+structure core.marker.Copy (Self : Type) where
+  cloneCloneInst : core.clone.Clone Self
 
 /- Trait declaration: [core::default::Default]
-   Source: '/rustc/d59363ad0b6391b7fc5bbb02c9ccf9300eef3753/library/core/src/default.rs', lines 102:0-102:24 -/
+   Source: '/rustc/d59363ad0b6391b7fc5bbb02c9ccf9300eef3753/library/core/src/default.rs', lines 102:0-102:24
+   Name pattern: core::default::Default -/
 structure core.default.Default (Self : Type) where
   default : Result Self
 
-/- Trait declaration: [test::arithmetics::BigInteger]
-   Source: 'src/arithmetics.rs', lines 42:0-42:20 -/
-structure arithmetics.BigInteger (Self : Type) where
+/- [test::biginteger::MulBuffer]
+   Source: 'src/biginteger/mod.rs', lines 49:0-49:43 -/
+structure biginteger.MulBuffer (N : Usize) where
+  b0 : Array U64 N
+  b1 : Array U64 N
+
+/- Trait declaration: [test::biginteger::BigInteger]
+   Source: 'src/biginteger/mod.rs', lines 1083:0-1105:14 -/
+structure biginteger.BigInteger (Self : Type) (N : Usize) where
+  coremarkerCopyInst : core.marker.Copy Self
+  corecloneCloneInst : core.clone.Clone Self
+  coreconvertFromSelfU64Inst : core.convert.From Self U64
+  coreconvertFromSelfU32Inst : core.convert.From Self U32
+  coreconvertFromSelfU16Inst : core.convert.From Self U16
+  coreconvertFromSelfU8Inst : core.convert.From Self U8
   add_with_carry : Self → Self → Result (Bool × Self)
+  sub_with_borrow : Self → Self → Result (Bool × Self)
+  mul2 : Self → Result (Bool × Self)
+  muln : Self → U32 → Result Self
+  mul_low : Self → Self → Result Self
+  mul_high : Self → Self → Result Self
+  div2 : Self → Result Self
+  divn : Self → U32 → Result Self
+  is_odd : Self → Result Bool
+  is_even : Self → Result Bool
+  is_zero : Self → Result Bool
+  num_bits : Self → Result U32
+  get_bit : Self → Usize → Result Bool
+  from_bits_be : Slice Bool → Result Self
+  from_bits_le : Slice Bool → Result Self
+  to_bytes_be : Self → Result (alloc.vec.Vec U8)
+  to_bytes_le : Self → Result (alloc.vec.Vec U8)
+
+/- Trait declaration: [core::convert::AsMut]
+   Source: '/rustc/d59363ad0b6391b7fc5bbb02c9ccf9300eef3753/library/core/src/convert/mod.rs', lines 368:0-368:26
+   Name pattern: core::convert::AsMut -/
+structure core.convert.AsMut (Self T : Type) where
+  as_mut : Self → Result (T × (T → Result Self))
+
+/- Trait declaration: [core::convert::AsRef]
+   Source: '/rustc/d59363ad0b6391b7fc5bbb02c9ccf9300eef3753/library/core/src/convert/mod.rs', lines 217:0-217:26
+   Name pattern: core::convert::AsRef -/
+structure core.convert.AsRef (Self T : Type) where
+  as_ref : Self → Result T
 
 end test

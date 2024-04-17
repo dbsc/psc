@@ -1,4 +1,0 @@
-mod arithmetics;
-
-fn main() {
-}
