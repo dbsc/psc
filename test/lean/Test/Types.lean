@@ -5,21 +5,9 @@ open Primitives
 
 namespace test
 
-/- Trait declaration: [core::convert::From]
-   Source: '/rustc/d59363ad0b6391b7fc5bbb02c9ccf9300eef3753/library/core/src/convert/mod.rs', lines 538:0-538:24
-   Name pattern: core::convert::From -/
--- structure core.convert.From (Self T : Type) where
---   from : T → Result Self
-
 /- [test::biginteger::BigInt]
    Source: 'src/biginteger/mod.rs', lines 39:0-39:33 -/
 @[reducible] def biginteger.BigInt (N : Usize) := (Array U64 N)
-
-/- Trait declaration: [core::clone::Clone]
-   Source: '/rustc/d59363ad0b6391b7fc5bbb02c9ccf9300eef3753/library/core/src/clone.rs', lines 107:0-107:22
-   Name pattern: core::clone::Clone -/
-structure core.clone.Clone (Self : Type) where
-  clone : Self → Result Self
 
 /- Trait declaration: [core::marker::Copy]
    Source: '/rustc/d59363ad0b6391b7fc5bbb02c9ccf9300eef3753/library/core/src/marker.rs', lines 450:0-450:21
@@ -40,22 +28,20 @@ structure biginteger.MulBuffer (N : Usize) where
   b1 : Array U64 N
 
 /- Trait declaration: [test::biginteger::BigInteger]
-   Source: 'src/biginteger/mod.rs', lines 1082:0-1104:14 -/
+   Source: 'src/biginteger/mod.rs', lines 1083:0-1105:14 -/
 structure biginteger.BigInteger (Self : Type) (N : Usize) where
   coremarkerCopyInst : core.marker.Copy Self
   corecloneCloneInst : core.clone.Clone Self
-  -- coreconvertFromSelfU64Inst : core.convert.From Self U64
-  -- coreconvertFromSelfU32Inst : core.convert.From Self U32
-  -- coreconvertFromSelfU16Inst : core.convert.From Self U16
-  -- coreconvertFromSelfU8Inst : core.convert.From Self U8
+  coreconvertFromSelfU64Inst : core.convert.From Self U64
+  coreconvertFromSelfU32Inst : core.convert.From Self U32
+  coreconvertFromSelfU16Inst : core.convert.From Self U16
+  coreconvertFromSelfU8Inst : core.convert.From Self U8
   add_with_carry : Self → Self → Result (Bool × Self)
   sub_with_borrow : Self → Self → Result (Bool × Self)
   mul2 : Self → Result (Bool × Self)
   muln : Self → U32 → Result Self
   mul_low : Self → Self → Result Self
   mul_high : Self → Self → Result Self
-  mul_helper : Self → Self → Usize → biginteger.MulBuffer N → Result
-    Unit
   div2 : Self → Result Self
   divn : Self → U32 → Result Self
   is_odd : Self → Result Bool
