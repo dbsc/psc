@@ -472,11 +472,22 @@ lemma add_with_carry_loop_overflow_correct
      have hmdd:= Int.emod_add_ediv (i1.val + i2.val + carry.val) (2^64)
      .scalar_tac
    rw[hmd]
-   sorry
-      -------------------------------------------
-   scalar_tac
-   
-   sorry
+   rw[hi1d,hi2]
+   have hfp: (((self.val).index i.val).val + ((other.val).index i.val).val + carry.val) * (2 ^ 64) ^ Int.toNat i.val -
+        ((self.val).index i.val).val * (2 ^ 64) ^ Int.toNat i.val +
+      (BigInt.valImpl (List.slice (i.val + 1) N.val other.val) * ((2 ^ 64) ^ Int.toNat i.val * 2 ^ 64) +
+        BigInt.valImpl self.val)=BigInt.valImpl self.val +
+      (2 ^ 64 * BigInt.valImpl (List.slice (i.val + 1) N.val other.val) + (((other.val).index i.val).val + carry.val)) *
+        (2 ^ 64) ^ Int.toNat i.val:=
+         by .scalar_tac
+   rw [hfp]
+   .scalar_tac
+   .scalar_tac
+  termination_by (N.val - i.val).toNat
+    decreasing_by
+    simp_wf
+    rw [hw1]
+    simp [sub_add_eq_sub_sub, *]
 
 def bool_to_int (b:Bool) := if b then 0 else 1
 
