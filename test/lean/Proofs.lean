@@ -106,7 +106,7 @@ lemma valImpl_lt_mod (l : List U64) : valImpl l < BigInt.mod_value l.len := by
     have hb : a.val < 2 ^ 64 := by scalar_tac
     have hc := Int.le_sub_one_of_lt ha
     have hd : 1 + b.len = b.len + 1 := by scalar_tac
-    have hf : (0 : Int) ≤ 2 ^ 64 := by simp 
+    have hf : (0 : Int) ≤ 2 ^ 64 := by simp
     have hg := Int.mul_le_mul_of_nonneg_right hc hf
     simp only [Int.sub_mul] at hg
     simp only [one_mul] at hg
@@ -132,12 +132,12 @@ lemma BigInt.val_lt_mod (N : Usize) (bn : Array U64 N) : valImpl bn.val < BigInt
   simp [*]
 
 theorem adc_for_add_with_carry_spec (a : U64) (b : U64) (carry : U8) :
-  ∃ new_carry r, biginteger.arithmetic.adc_for_add_with_carry a b carry = .ok (new_carry, r) ∧ 
+  ∃ new_carry r, biginteger.arithmetic.adc_for_add_with_carry a b carry = .ok (new_carry, r) ∧
   new_carry = (a.val + b.val + carry.val) / (2 ^ 64) ∧
   r = (a.val + b.val + carry.val) % 2 ^ 64 := by sorry
 
 
-lemma BigInt.ha_0_val (N: Usize) (bi : Array U64 N) : N = 0#usize → valImpl bi.val = 0 := 
+lemma BigInt.ha_0_val (N: Usize) (bi : Array U64 N) : N = 0#usize → valImpl bi.val = 0 :=
 by {
       unfold valImpl;
       intro hN;
@@ -149,9 +149,9 @@ by {
         }
   }
 
--- lemma BigInt.h_1_val (N: Usize) (bi : BigInt N) : N = 1#usize → valImpl (Array.v bi) = (Array.v bi).index 0#usize.val  := 
+-- lemma BigInt.h_1_val (N: Usize) (bi : BigInt N) : N = 1#usize → valImpl (Array.v bi) = (Array.v bi).index 0#usize.val  :=
 -- by {
---         simp [BigInt.val]; 
+--         simp [BigInt.val];
 --         unfold valImpl;
 --         have h := BigInt.len_spec N bi;
 --         match hq0 : bi.val with
@@ -210,7 +210,7 @@ lemma BigInt.mod_value_eq (n : Int) : BigInt.mod_value n = (2 ^ 64) ^ n.toNat :=
   rw [BigInt.mod_value]
   rw [U64.max]
   simp
-  
+
 lemma add_with_carry_loop_correct :
   ∀ (N : Usize) (self : Array U64 N) (other : Array U64 N) (carry : U8) (i : Usize) (h : i ≤ N),
   ∃ b v, biginteger.BigIntegertestbigintegerBigIntN.add_with_carry_loop N self other carry i = .ok (b, v) ∧
@@ -223,7 +223,7 @@ lemma add_with_carry_loop_correct :
     rw [biginteger.BigIntegertestbigintegerBigIntN.add_with_carry_loop]
     if hind : (N.val - i.val).toNat = 0 then
       have hieqN : i = N := by {
-        simp only [Int.toNat_eq_zero, tsub_le_iff_right, zero_add] at hind; 
+        simp only [Int.toNat_eq_zero, tsub_le_iff_right, zero_add] at hind;
         simp [Scalar.le_equiv] at h
         scalar_tac
       }
@@ -235,7 +235,7 @@ lemma add_with_carry_loop_correct :
       simp [*]
     else
       have hiltN : i < N := by {
-        simp only [Int.toNat_eq_zero, tsub_le_iff_right, zero_add, not_le] at hind 
+        simp only [Int.toNat_eq_zero, tsub_le_iff_right, zero_add, not_le] at hind
         simp [Scalar.lt_equiv]
         scalar_tac
       }
@@ -337,9 +337,9 @@ lemma add_with_carry_loop_overflow_correct
   (b ↔ valImpl self.val + (valImpl (other.val.slice i.val N.val) + carry.val)* (BigInt.mod_value i) > BigInt.max_value N) := by
   rw [biginteger.BigIntegertestbigintegerBigIntN.add_with_carry_loop]
   if hind : (N.val - i.val).toNat = 0 then
-    have hieqN : i = N := by 
+    have hieqN : i = N := by
       {
-        simp only [Int.toNat_eq_zero, tsub_le_iff_right, zero_add] at hind; 
+        simp only [Int.toNat_eq_zero, tsub_le_iff_right, zero_add] at hind;
         simp [Scalar.le_equiv] at h
         scalar_tac
       }
@@ -351,7 +351,7 @@ lemma add_with_carry_loop_overflow_correct
     rw[List.slice]
     simp
     have he0: valImpl [] =0 :=
-     by 
+     by
      unfold valImpl
      linarith
     rw[he0]
@@ -369,15 +369,15 @@ lemma add_with_carry_loop_overflow_correct
     contrapose! h₁
     rw[h₁]
     simp
-    have hn: 0 ≤ valImpl self.val:= 
+    have hn: 0 ≤ valImpl self.val:=
      by exact valImpl_ge_zero self.val
-    have h2n: valImpl self.val < BigInt.mod_value N.val := 
+    have h2n: valImpl self.val < BigInt.mod_value N.val :=
      by exact BigInt.val_lt_mod N self
     unfold BigInt.max_value
     linarith
-  else 
+  else
    have hiltN : i < N := by {
-        simp only [Int.toNat_eq_zero, tsub_le_iff_right, zero_add, not_le] at hind 
+        simp only [Int.toNat_eq_zero, tsub_le_iff_right, zero_add, not_le] at hind
         simp [Scalar.lt_equiv]
         scalar_tac
       }
@@ -398,7 +398,7 @@ lemma add_with_carry_loop_overflow_correct
     by
     linarith
    have hdivineq : (i1.val+i2.val+carry.val)/2^64<2 :=
-    by 
+    by
      rw[Int.ediv_lt_iff_lt_mul]
      exact hii12
      linarith
@@ -445,10 +445,10 @@ lemma add_with_carry_loop_overflow_correct
    have hitn: Int.toNat 1 = 1 :=
       by simp
    have hmax:U64.max+1=2^64:=
-      by 
+      by
        .scalar_tac
    have h_pow_plus_one: (U64.max + 1) ^ Int.toNat (i.val + 1)=(U64.max + 1) ^ Int.toNat (i.val)*2^64:=
-    by 
+    by
      rw [Int.toNat_add]
      rw[pow_add]
      rw [hitn]
@@ -468,7 +468,7 @@ lemma add_with_carry_loop_overflow_correct
        by .scalar_tac
    rw[hff]
    have hmd: (i1.val + i2.val + carry.val) % 2 ^ 64 + (i1.val + i2.val + carry.val) / 2 ^ 64 * 2 ^ 64 =(i1.val + i2.val + carry.val):=
-    by 
+    by
      have hmdd:= Int.emod_add_ediv (i1.val + i2.val + carry.val) (2^64)
      .scalar_tac
    rw[hmd]
@@ -501,7 +501,7 @@ lemma add_with_carry_spec (N : Usize) (self : BigInt N) (other : BigInt N) :
   := by
   sorry
 
-lemma add_with_carry_overflow [Inhabited U64] : 
+lemma add_with_carry_overflow [Inhabited U64] :
   ∀ (N : Usize) (self : BigInt N) (other : BigInt N),
   ∃ b val, biginteger.BigIntegertestbigintegerBigIntN.add_with_carry N self other = .ok (b, val) ∧
   (¬b ↔ self.val + other.val ≤ BigInt.max_value N) :=
@@ -520,7 +520,7 @@ by
   simp at hid
   rw [BigInt.val]
   rw [BigInt.mod_value] at hid
-  simp at hid 
+  simp at hid
   simp only [other_full_slice] at hid
   exact hid
   intro h₁
@@ -531,7 +531,7 @@ by
   simp at hid
   simp only [other_full_slice] at hid
   rw [BigInt.mod_value] at hid
-  simp at hid 
+  simp at hid
   exact hid
 
 lemma add_with_carry_correct :
@@ -544,11 +544,11 @@ lemma add_with_carry_correct :
     progress with add_with_carry_loop_correct as ⟨ i, hi, hid ⟩
     . scalar_tac
     exists i, hi
-    simp only [true_and] 
+    simp only [true_and]
     unfold BigInt.mod_value at hid
     simp only [Scalar.ofInt_val_eq, Int.toNat_zero, pow_zero, one_mul] at hid
     have other_full_slice : List.slice 0 N.val other.v = other.v := by simp only [BigInt.len_spec, full_slice]
-    simp only [other_full_slice] at hid 
+    simp only [other_full_slice] at hid
     unfold BigInt.val
     unfold BigInt.mod_value
     simp [*]
@@ -558,7 +558,7 @@ lemma is_even_correct :
   ∃ b, biginteger.BigInt.const_is_even N self = .ok b ∧ b = (self.val % 2 = 0) := by {
     intro N self h
     unfold biginteger.BigInt.const_is_even
-    progress with Array.index_usize_spec as ⟨ idef, idecl ⟩ 
+    progress with Array.index_usize_spec as ⟨ idef, idecl ⟩
     progress as ⟨ is_even_def, is_even_decl ⟩
     simp
     rw [Scalar.eq_equiv]
