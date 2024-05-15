@@ -333,8 +333,76 @@ lemma add_with_carry_spec (N : Usize) (self : BigInt N) (other : BigInt N) :
   ∃ b v, biginteger.BigIntegertestbigintegerBigIntN.add_with_carry N self other = .ok (b, v) ∧
   (bool_to_int b) * (BigInt.mod_value N.val) + v.val = self.val + other.val
   := by
-  sorry
-
+   let ⟨i,hi,hid⟩:= add_with_carry_overflow N self other
+   let ⟨i1,hi1,hid1⟩:=add_with_carry_correct N self other
+   --have other_full_slice : List.slice 0 N.val other.v = other.v := by simp only [BigInt.len_spec, full_slice]
+   --rw [other_full_slice] at hid
+   let ⟨hidl,hidr⟩:= hid
+   let ⟨hidl1,hidr1⟩:= hid1
+   rw [hidl] at hidl1
+   simp at hidl1
+   let ⟨eq1,eq2⟩:=hidl1
+   exists i,hi 
+   rw [hidl]
+   simp only [true_and]
+   rw [bool_to_int]
+   have hgm1: BigInt.val self < BigInt.mod_value N.val := BigInt.val_lt_mod N self
+   have hgm2: BigInt.val other < BigInt.mod_value N.val := BigInt.val_lt_mod N other
+   have hgmn1:BigInt.val self ≥ 0 := valImpl_ge_zero self.v
+   have hgmn2:BigInt.val other ≥ 0 := valImpl_ge_zero other.v
+   have hmgez:BigInt.mod_value N.val ≥ 0 := by
+       .scalar_tac
+   if hit: i=true then
+    rw [hit]
+    simp
+    rw [hit] at hidr
+    have hlm: BigInt.val self + BigInt.val other > BigInt.max_value N.val := 
+     by 
+      contrapose! hidr
+      simp
+      exact hidr
+    
+    have hgm: BigInt.val self + BigInt.val other < 2*BigInt.mod_value N.val :=
+     by 
+      
+      .scalar_tac
+    rw [BigInt.max_value] at hlm
+    have hlem: BigInt.val self + BigInt.val other ≥ BigInt.mod_value N.val:=
+      by linarith
+    have hmn: BigInt.val hi1 = (BigInt.val self + BigInt.val other-BigInt.mod_value N.val) % BigInt.mod_value N.val:=
+      by 
+        simp [Int.add_mul_emod_self]
+        exact hidr1
+    have hnn:BigInt.val self + BigInt.val other - BigInt.mod_value N.val= BigInt.val hi1:=
+     by
+      have hltn: BigInt.val self + BigInt.val other - BigInt.mod_value N.val<BigInt.mod_value N.val:=
+       by .scalar_tac
+      have hgez: BigInt.val self + BigInt.val other - BigInt.mod_value N.val ≥ 0:=
+       by .scalar_tac
+      have hmeq:=Int.mod_eq_of_lt hgez hltn
+      rw[Int.mod_eq_emod hgez hmgez] at hmeq
+      rw [hmeq] at hmn
+      exact hmn.symm
+    rw[eq2]
+    .scalar_tac
+   else
+     simp [Bool.bool_eq_false] at hit
+     rw[hit]
+     simp
+     rw[hit] at hidr
+     simp [Bool.bool_eq_false] at hidr
+     have hgmn4: BigInt.val self + BigInt.val other ≥ 0:= 
+      by .scalar_tac
+    
+     have hidq: BigInt.val self + BigInt.val other < BigInt.mod_value N.val:=
+      by 
+       rw[BigInt.max_value] at hidr
+       .scalar_tac
+     have hmeq:=Int.mod_eq_of_lt hgmn4 hidq
+     rw[Int.mod_eq_emod hgmn4 hmgez] at hmeq
+     rw [hmeq] at hidr1
+     rw[eq2]
+     exact hidr1
 end biginteger
 
 end test

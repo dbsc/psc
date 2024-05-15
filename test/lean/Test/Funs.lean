@@ -1086,39 +1086,39 @@ def functions.mul2_add1 (x : U32) : Result U32 :=
   let i ← 2#u32 * x
   i + 1#u32
 
-/- [test::biginteger::signed_mod_reduction]:
-   Source: 'src/biginteger/mod.rs', lines 1059:0-1059:56 -/
-def biginteger.signed_mod_reduction (n : U64) (modulus : U64) : Result I64 :=
-  do
-  let i ← n % modulus
-  let t ← Scalar.cast .I64 i
-  let i1 ← Scalar.cast .U64 t
-  let i2 ← modulus / 2#u64
-  if i1 >= i2
-  then do
-       let i3 ← Scalar.cast .I64 modulus
-       t - i3
-  else Result.ok t
+-- /- [test::biginteger::signed_mod_reduction]:
+--    Source: 'src/biginteger/mod.rs', lines 1059:0-1059:56 -/
+-- def biginteger.signed_mod_reduction (n : U64) (modulus : U64) : Result I64 :=
+--   do
+--   let i ← n % modulus
+--   let t ← Scalar.cast .I64 i
+--   let i1 ← Scalar.cast .U64 t
+--   let i2 ← modulus / 2#u64
+--   if i1 >= i2
+--   then do
+--        let i3 ← Scalar.cast .I64 modulus
+--        t - i3
+--   else Result.ok t
 
-/- [test::functions::min]:
-   Source: 'src/functions.rs', lines 1:0-1:33 -/
-def functions.min (x : U32) (y : U32) : Result U32 :=
-  if x < y
-  then Result.ok x
-  else Result.ok y
+-- /- [test::functions::min]:
+--    Source: 'src/functions.rs', lines 1:0-1:33 -/
+-- def functions.min (x : U32) (y : U32) : Result U32 :=
+--   if x < y
+--   then Result.ok x
+--   else Result.ok y
 
-/- [test::functions::abs]:
-   Source: 'src/functions.rs', lines 5:0-5:25 -/
-def functions.abs (x : I32) : Result I32 :=
-  if x < 0#i32
-  then -. x
-  else Result.ok x
+-- /- [test::functions::abs]:
+--    Source: 'src/functions.rs', lines 5:0-5:25 -/
+-- def functions.abs (x : I32) : Result I32 :=
+--   if x < 0#i32
+--   then -. x
+--   else Result.ok x
 
-/- [test::functions::mul2_add1]:
-   Source: 'src/functions.rs', lines 9:0-9:31 -/
-def functions.mul2_add1 (x : U32) : Result U32 :=
-  do
-  let i ← 2#u32 * x
-  i + 1#u32
+-- /- [test::functions::mul2_add1]:
+--    Source: 'src/functions.rs', lines 9:0-9:31 -/
+-- def functions.mul2_add1 (x : U32) : Result U32 :=
+--   do
+--   let i ← 2#u32 * x
+--   i + 1#u32
 
 end test

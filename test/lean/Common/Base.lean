@@ -194,7 +194,7 @@ lemma full_slice (l : List α) (N: Int) (h : N = l.len): List.slice 0 N l = l :=
   simp only [sub_zero, List.idrop_zero]
   simp only [full_itake, h]
 
-def bool_to_int (b:Bool) := if b then 0 else 1
+def bool_to_int (b:Bool) := if b then 1 else 0
 
 end biginteger
 
